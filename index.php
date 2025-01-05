@@ -110,77 +110,82 @@ $review = new review();
     </select>
  
                 <!-- Best Offers Section -->
-                <section class="py-16 bg-gray-100">
-                    <div class="text-center mb-10">
-                        <h2 class="text-3xl font-bold">Meilleures Offres</h2>
-                        <p class="text-gray-600">Découvrez nos voitures les mieux notées</p>
-                    </div>
-                    <div class="mx-auto px-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                    <?php
-                    $vehicle = new Vehicle();
-                    $cars = $vehicle->getCars(); 
+   <!-- Best Offers Section -->
+   <section class="py-16 bg-gray-100">
+        <div class="text-center mb-10">
+            <h2 class="text-3xl font-bold">Meilleures Offres</h2>
+            <p class="text-gray-600">Découvrez nos voitures les mieux notées</p>
+        </div>
+        <div class="mx-auto px-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <?php
+        $vehicle = new Vehicle();
+        $cars = $vehicle->getCars(); 
 
-                    $limit = 8; 
+        $limit = 8; 
 
-                    $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
-                    $page = max($page, 1); 
+        $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+        $page = max($page, 1); 
 
-                    $totalCars = $vehicle->getTotalCars();
-                    $totalPages = ceil($totalCars / $limit); 
+        $totalCars = $vehicle->getTotalCars();
+        $totalPages = ceil($totalCars / $limit); 
 
-                    $cars = $vehicle->paginateVehicles($page, $limit);
+        $cars = $vehicle->paginateVehicles($page, $limit);
 
-  foreach ($cars as $car) {
-    $brand = htmlspecialchars($car['brand']);
-    $model = htmlspecialchars($car['model']);
-    $pricePerDay = htmlspecialchars($car['pricePerDay']);
-    $image = htmlspecialchars($car['image']);
-   
-    // Get the recent rating for this car
- // Get the recent rating for this car
- $recentRating = $review->getRecentRating($car['id']);
- $ratingValue = $recentRating ? $recentRating['rating'] : 0;
- $totalReviews = $review->getTotalReviews($car['id']);
- 
-    echo "
-        <div class=\"bg-white shadow-md rounded-lg overflow-hidden transform hover:scale-105 transition\">
-            <img src=\"Admin/$image\" alt=\"$brand $model\" class=\"carcontainer h-44 w-full\"> 
-            <div class=\"p-6\">
-                <h3 class=\"text-xl font-semibold\">$brand $model</h3>
-                <p class=\"text-gray-600\">À partir de $pricePerDay €/jour</p>
-                <div class=\"mt-4 flex justify-between items-center\">
-                    <div class=\"stars\" data-rating=\"$ratingValue\">
-                        <span class=\"star cursor-pointer\" data-value=\"1\">★</span>
-                        <span class=\"star cursor-pointer\" data-value=\"2\">★</span>
-                        <span class=\"star cursor-pointer\" data-value=\"3\">★</span>
-                        <span class=\"star cursor-pointer\" data-value=\"4\">★</span>
-                        <span class=\"star cursor-pointer\" data-value=\"5\">★</span>
-                    </div>
-                    <span class=\"text-gray-600 ml-2\">($totalReviews avis)</span>
-                    <button onclick=\"openAllAvisPopup({$car['id']})\" class=\"viewReviewsBtn text-sm text-gray-800 py-2 cursor-pointer\">Voir les avis</button>
-                </div>";
+        foreach ($cars as $car) {
+            $brand = htmlspecialchars($car['brand']);
+            $model = htmlspecialchars($car['model']);
+            $pricePerDay = htmlspecialchars($car['pricePerDay']);
+            $image = htmlspecialchars($car['image']);
+            $status = htmlspecialchars($car['status']);
+            $isAvailable = $vehicle->checkAvailability($car['id']);
 
-                if (isset($_SESSION['user_email']) && isset($_SESSION['user_id'])) { 
+            // Get the recent rating for this car
+            $recentRating = $review->getRecentRating($car['id']);
+            $ratingValue = $recentRating ? $recentRating['rating'] : 0;
+            $totalReviews = $review->getTotalReviews($car['id']);
+
+            echo "
+                <div class=\"bg-white shadow-md rounded-lg overflow-hidden transform hover:scale-105 transition\">
+                    <img src=\"Admin/$image\" alt=\"$brand $model\" class=\"carcontainer h-44 w-full\"> 
+                    <div class=\"p-6\">
+                        <h3 class=\"text-xl font-semibold\">$brand $model</h3>
+                        <p class=\"text-gray-600\">À partir de $pricePerDay €/jour</p>
+                        <div class=\"mt-4 flex justify-between items-center\">
+                            <div class=\"stars\" data-rating=\"$ratingValue\">
+                                <span class=\"star cursor-pointer\" data-value=\"1\">★</span>
+                                <span class=\"star cursor-pointer\" data-value=\"2\">★</span>
+                                <span class=\"star cursor-pointer\" data-value=\"3\">★</span>
+                                <span class=\"star cursor-pointer\" data-value=\"4\">★</span>
+                                <span class=\"star cursor-pointer\" data-value=\"5\">★</span>
+                            </div>
+                            <span class=\"text-gray-600 ml-2\">($totalReviews avis)</span>
+                            <button onclick=\"openAllAvisPopup({$car['id']})\" class=\"viewReviewsBtn text-sm text-gray-800 py-2 cursor-pointer\">Voir les avis</button>
+                        </div>";
+
+            if ($userIsRegistered) { 
+                if ($isAvailable) {
                     echo "<button type=\"button\" onclick=\"showreservationform(" . htmlspecialchars(json_encode($car)) . ")\" class=\"reserveBtns mt-6 w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700\">Réserver</button>";
                 } else {
-                    echo "<button type=\"button\" onclick=\"showLoginAlert()\" class=\"mt-6 w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700\">Réserver</button>";
+                    echo "<span class=\"mt-6 w-full bg-gray-400 text-white py-2 rounded-lg\">Not Available</span>";
                 }
+            } else {
+                echo "<button type=\"button\" onclick=\"showLoginAlert()\" class=\"mt-6 w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700\">Réserver</button>";
+            }
 
-    echo "
-            </div>
-        </div>
-    ";
-                    }
-                    ?>
+            echo "
                     </div>
+                </div>
+            ";
+        }
+        ?>
+        </div>
  
-                </section>
+    </section>
                 
-<!-- All Avis Popup (Initially Hidden) -->
-<!-- All Avis Popup (Initially Hidden) -->
+<!-- All Avis Popup -->
 <div id="allAvisPopup" class="popup fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
     <div class="popup-content bg-white p-6 rounded-lg max-w-lg w-full shadow-lg">
-        <h2 class="text-xl font-bold mb-4">كل المراجعات</h2>
+        <h2 class="text-xl font-bold mb-4"> All reviews</h2>
         <div id="reviewsList" class="mb-4">
             <?php
             $pdo = new Review();
@@ -200,7 +205,7 @@ $review = new review();
     }
      ?>
         </div>
-        <button onclick="closeAllAvisPopup() "  id="closeAllAvisPopup" class="bg-red-500 text-white px-4 py-2 rounded mt-4">إغلاق</button>
+        <button onclick="closeAllAvisPopup() "  id="closeAllAvisPopup" class="bg-red-500 text-white px-4 py-2 rounded mt-4">Close</button>
     </div>
 </div>
                 <!-- Car Details Popup -->

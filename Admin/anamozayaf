@@ -1,3 +1,31 @@
+<form action="Adminedit.php" method="POST">
+    <input type="hidden" name="vehicle_id" value="<?php echo $vehicle['id']; ?>">
+    <input type="text" name="model" placeholder="Model" value="<?php echo $vehicle['model']; ?>">
+    <input type="text" name="brand" placeholder="Brand" value="<?php echo $vehicle['brand']; ?>">
+    <textarea name="description" placeholder="Description"><?php echo $vehicle['description']; ?></textarea>
+    <input type="number" name="pricePerDay" placeholder="Price Per Day" value="<?php echo $vehicle['pricePerDay']; ?>">
+    <input type="text" name="status" placeholder="Status" value="<?php echo $vehicle['status']; ?>">
+    <input type="number" name="categoryId" placeholder="Category ID" value="<?php echo $vehicle['categoryId']; ?>">
+    <input type="text" name="characteristics" placeholder="Characteristics" value="<?php echo $vehicle['characteristics']; ?>">
+    <input type="text" name="image" placeholder="Image Path" value="<?php echo $vehicle['image']; ?>">
+    <button class="text-blue-600 hover:text-blue-900" type="submit">Edit</button>
+</form>
+<form action="Adminedellit.php" method="POST">
+    <input type="hidden" name="vehicle_id" value="<?php echo $vehicle['id']; ?>">
+    <button class="text-red-600 hover:text-red-900 ml-2" type="submit">Delete</button>
+</form>
+
+
+
+
+
+
+
+
+
+
+
+
 <?php
 require_once 'connectiondatabase.php';  
 class Vehicle extends Data{
@@ -90,7 +118,44 @@ class Vehicle extends Data{
             throw new Exception("Database error: " . $e->getMessage());
         }
     }
-    
+    public function editVehicle($id, $model, $brand, $description, $pricePerDay, $status, $categoryId, $characteristics, $image) {
+        if (empty($model) || empty($brand) || empty($categoryId)) {
+            throw new Exception("Model, brand, and category are required fields");
+        }
+
+        try {
+            $stmt = $this->pdo->prepare("
+                UPDATE vehicles 
+                SET model = ?, brand = ?, description = ?, pricePerDay = ?, status = ?, categoryId = ?, characteristics = ?, image = ? 
+                WHERE id = ?
+            ");
+
+            return $stmt->execute([
+                $model,
+                $brand,
+                $description,
+                $pricePerDay,
+                $status,
+                $categoryId,
+                $characteristics,
+                $image,
+                $id
+            ]);
+        } catch (PDOException $e) {
+            throw new Exception("Database error: " . $e->getMessage());
+        }
+    }
+
+    public function deleteVehicle($id) {
+        try {
+            $stmt = $this->pdo->prepare("DELETE FROM vehicles WHERE id = ?");
+            $stmt->bindParam(1, $id, PDO::PARAM_INT);
+            return $stmt->execute();
+        } catch (PDOException $e) {
+            throw new Exception("Database error: " . $e->getMessage());
+        }
+    }
+
     public function getAllVehicles() {
         try {
             $stmt = $this->pdo->prepare("
@@ -130,24 +195,17 @@ class Vehicle extends Data{
         return $cars; 
     }
 
-        // ... (other methods)
-    
-        public function checkAvailability($vehicleId) {
-            $query = "
-                SELECT status 
-                FROM reservations 
-                WHERE vehicleId = :vehicleId 
-                AND status = 'confirmed'
-            ";
-            $stmt = $this->pdo->prepare($query);
-            $stmt->bindParam(":vehicleId", $vehicleId);
-            $stmt->execute();
-    
-            $result = $stmt->fetch(PDO::FETCH_ASSOC);
-            return $result === false; // Available if no confirmed reservation
-        }
-    
-        // ... (other methods)
+
+    public function checkAvailability($startDate, $endDate) {
+        $query = "SELECT * FROM vehicles WHERE status = 'available' AND createdAt BETWEEN :startDate AND :endDate";
+        $stmt = $this->pdo->prepare($query);
+        $stmt->bindParam(":startDate", $startDate);
+        $stmt->bindParam(":endDate", $endDate);
+        $stmt->execute();
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);  
+    }
+
     public function updateStatus($status) {
         $query = "UPDATE vehicles SET status = :status WHERE id = :id";  
         $stmt = $this->pdo->prepare($query);

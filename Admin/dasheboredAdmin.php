@@ -5,9 +5,11 @@ require_once 'getstatistique.php';
 require_once '../classes/reservationclass.php';
 require_once '../classes/categorieclass.php';
 require_once '../classes/reviewclass.php';
+require_once '../classes/classvihcule.php';
 $review = new Review();
 $allReviews = $review->getAllReviews(); // Get all reviews for the admin
-
+$vehicle = new Vehicle();
+$vehicles = $vehicle->getAllVehicles();
 // First check authentication
 if (!isset($_SESSION['user_email']) || $_SESSION['user_id'] != 1) {
     header("Location: ../connexion/singin.php");
@@ -103,185 +105,159 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reservation_id']) && 
 
                 <!-- Manage Vehicles Section -->
 <section id="vehicles" class="section-content hidden">
-    <div class="bg-white rounded-lg shadow">
-        <div class="p-6 border-b flex justify-between items-center">
-            <h2 class="text-xl font-semibold">Vehicle Management</h2>
-            <button onclick="showAddVehicleForm()" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Add New Vehicle</button>
-            <button onclick="showAddCategoryForm()" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">Add New Category</button>
+<div class="container mx-auto px-4 py-8">
+        <h1 class="text-3xl font-bold mb-6">Manage Vehicles</h1>
+        <div class="bg-white rounded-lg shadow">
+            <div class="p-6 border-b flex justify-between items-center">
+                <h2 class="text-xl font-semibold">Vehicle Management</h2>
+                <button onclick="showAddVehicleForm()" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Add New Vehicle</button>
+                <button onclick="showAddCategoryForm()" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">Add New Category</button>
+            </div>
+            <div class="p-6">
+                <table class="w-full">
+                    <thead>
+                        <tr>
+                            <th class="text-left p-3">Image</th>
+                            <th class="text-left p-3">Model</th>
+                            <th class="text-left p-3">Brand</th>
+                            <th class="text-left p-3">Category</th>
+                            <th class="text-left p-3">Price Per Day (DH)</th>
+                            <th class="text-left p-3">Status</th>
+                            <th class="text-left p-3">Reserved By</th>
+                            <th class="text-left p-3">Description</th>
+                            <th class="text-left p-3">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($vehicles as $vehicle): ?>
+                            <tr>
+                                <td class="p-3"><img src="<?php echo htmlspecialchars($vehicle['image']); ?>" alt="Vehicle Image" class="w-16 h-16 object-cover"></td>
+                                <td class="p-3"><?php echo htmlspecialchars($vehicle['model']); ?></td>
+                                <td class="p-3"><?php echo htmlspecialchars($vehicle['brand']); ?></td>
+                                <td class="p-3"><?php echo htmlspecialchars($vehicle['category_name']); ?></td>
+                                <td class="p-3"><?php echo htmlspecialchars($vehicle['pricePerDay']); ?> DH</td>
+                                <td class="p-3"><?php echo htmlspecialchars($vehicle['status']); ?></td>
+                                <td class="p-3"><?php echo htmlspecialchars($vehicle['firstName'] . ' ' . $vehicle['lastName']); ?></td>
+                                <td class="p-3"><?php echo htmlspecialchars($vehicle['description']); ?></td>
+                                <td class="p-3">
+                                <form action="Adminedit.php" method="POST">
+    <input type="hidden" name="vehicle_id" value="<?php echo $vehicle['id']; ?>">
+    <button class="text-blue-600 hover:text-blue-900" type="submit">Edit</button>
+</form>
+<form action="Adminedellit.php" method="POST">
+    <input type="hidden" name="vehicle_id" value="<?php echo $vehicle['id']; ?>">
+    <button class="text-red-600 hover:text-red-900 ml-2" type="submit">Delete</button>
+</form>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
         </div>
-        <div class="p-6">
-            <table class="w-full">
-                <thead>
-                    <tr>
-                        <th class="text-left p-3">Model</th>
-                        <th class="text-left p-3">Price</th>
-                        <th class="text-left p-3">Availability</th>
-                        <th class="text-left p-3">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td class="p-3">Toyota Corolla</td>
-                        <td class="p-3">300 DH</td>
-                        <td class="p-3">Available</td>
-                        <td class="p-3">
-                            <button class="text-blue-600 hover:text-blue-900">Edit</button>
-                            <button class="text-red-600 hover:text-red-900 ml-2">Delete</button>
-                        </td>
-                    </tr>
-                    <!-- More vehicle -->
-                </tbody>
-            </table>
+    </div>
+
+    <!-- Add New Vehicle Form -->
+    <div id="addVehicleForm" class="fixed inset-0 flex items-center justify-center z-50 hidden bg-black bg-opacity-50">
+        <div class="bg-white rounded-lg shadow-lg p-6 w-96">
+            <h3 class="text-lg font-bold text-gray-800 mb-4">Add New Vehicle</h3>
+            <form id="newVehicleForm" action="setvihucle.php" method="POST" class="space-y-4" enctype="multipart/form-data">
+                <div id="vehicleFields">
+                    <!-- Dynamic vehicle form fields will appear here -->
+                    <div class="vehicle-field flex space-x-4 mb-4">
+                        <div class="flex flex-col w-full">
+                            <label class="text-sm font-medium text-gray-700 mb-1">Model</label>
+                            <input type="text" name="model" required class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                        </div>
+                        <div class="flex flex-col w-full">
+                            <label class="text-sm font-medium text-gray-700 mb-1">Brand</label>
+                            <input type="text" name="brand" required class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                        </div>
+                    </div>
+
+                    <div class="vehicle-field flex space-x-4 mb-4">
+                        <div class="flex flex-col w-full">
+                            <label class="text-sm font-medium text-gray-700 mb-1">Price Per Day (DH)</label>
+                            <input type="number" name="pricePerDay" required class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                        </div>
+                    </div>
+
+                    <div class="vehicle-field flex space-x-4 mb-4">
+                        <div class="flex flex-col w-full">
+                            <label class="text-sm font-medium text-gray-700 mb-1">Description</label>
+                            <textarea name="description" required rows="3" class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"></textarea>
+                        </div>
+                    </div>
+                    <div class="flex flex-col w-full">
+                        <label for="image" class="text-sm font-medium text-gray-700 mb-1">Image</label>
+                        <input type="file" name="image" id="image" required class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                    </div>
+                    <div class="vehicle-field flex space-x-4 mb-4">
+                        <div class="flex flex-col w-full">
+                            <label class="text-sm font-medium text-gray-700 mb-1">Category</label>
+                            <select name="categoryId" required class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                                <?php foreach ($categories as $category): ?>
+                                    <option value="<?php echo htmlspecialchars($category['id']); ?>"><?php echo htmlspecialchars($category['name']); ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div class="flex flex-col w-full">
+                            <label class="text-sm font-medium text-gray-700 mb-1">Status</label>
+                            <select name="status" required class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                                <option value="available">Available</option>
+                                <option value="unavailable">Unavailable</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex justify-end space-x-2">
+                    <button type="button" onclick="hideAddVehicleForm()" class="px-4 py-2 bg-gray-400 text-white rounded-md shadow-sm hover:bg-gray-500 transition">
+                        Cancel
+                    </button>
+                    <button type="button" onclick="addNewVehicleField()" class="px-4 py-2 bg-blue-600 text-white rounded-md shadow-sm hover:bg-blue-700 transition">
+                        Add More Vehicles
+                    </button>
+                    <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded-md shadow-sm hover:bg-green-700 transition">
+                        Add Vehicle
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 
-   <!-- Add New Vehicle -->
-<div id="addVehicleForm" class="fixed inset-0 flex items-center justify-center z-50 hidden bg-black bg-opacity-50">
-    <div class="bg-white rounded-lg shadow-lg p-6 w-96">
-        <h3 class="text-lg font-bold text-gray-800 mb-4">Add New Vehicle</h3>
-        <form id="newVehicleForm" action="setvihucle.php" method="POST" class="space-y-4"  enctype="multipart/form-data">
-            <div id="vehicleFields">
-                <!-- Dynamic vehicle form fields will appear here -->
-                <div class="vehicle-field flex space-x-4 mb-4">
-                    <div class="flex flex-col w-full">
-                        <label class="text-sm font-medium text-gray-700 mb-1">Model</label>
-                        <input type="text" name="model[]" required 
-                            class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
+    <!-- Add New Category Form -->
+    <div id="addCategoryForm" class="fixed inset-0 flex items-center justify-center z-50 hidden bg-black bg-opacity-50">
+        <div class="bg-white rounded-lg shadow-lg p-6 w-96">
+            <h3 class="text-lg font-bold text-gray-800 mb-4">Add New Category</h3>
+            <form id="newCategoryForm" action="setcategory.php" method="POST" class="space-y-4">
+                <div id="categoryFields">
+                    <div class="category-field flex flex-col w-full mb-4">
+                        <label class="text-sm font-medium text-gray-700 mb-1">Category Name</label>
+                        <input type="text" name="name" id="categoryName" required class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
                     </div>
-                    <div class="flex flex-col w-full">
-                        <label class="text-sm font-medium text-gray-700 mb-1">Brand</label>
-                        <input type="text" name="brand[]" required 
-                            class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                    <div class="category-field flex flex-col w-full mb-4">
+                        <label class="text-sm font-medium text-gray-700 mb-1">Category Description</label>
+                        <input type="text" name="description" id="categoryDescription" required class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
                     </div>
                 </div>
 
-                <div class="vehicle-field flex space-x-4 mb-4">
-                    <div class="flex flex-col w-full">
-                        <label class="text-sm font-medium text-gray-700 mb-1">Price Per Day (DH)</label>
-                        <input type="number" name="pricePerDay[]" required 
-                            class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
-                    </div>
+                <div class="flex justify-end space-x-2">
+                    <button type="button" onclick="hideAddCategoryForm()" class="px-4 py-2 bg-gray-400 text-white rounded-md shadow-sm hover:bg-gray-500 transition">
+                        Cancel
+                    </button>
+                    <button type="button" onclick="addNewCategoryField()" class="px-4 py-2 bg-blue-600 text-white rounded-md shadow-sm hover:bg-blue-700 transition">
+                        Add More Categories
+                    </button>
+                    <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded-md shadow-sm hover:bg-green-700 transition">
+                        Add Category
+                    </button>
                 </div>
-
-                <div class="vehicle-field flex space-x-4 mb-4">
-                    <div class="flex flex-col w-full">
-                        <label class="text-sm font-medium text-gray-700 mb-1">Description</label>
-                        <textarea name="description[]" required rows="3" 
-                            class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"></textarea>
-                    </div>
-                </div>
-                <div class="flex flex-col w-full">
-                    <label for="image" class="text-sm font-medium text-gray-700 mb-1">Image</label>
-                <input type="file" name="image[]" id="image" required 
-                    class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
-                    </div>
-                <div class="vehicle-field flex space-x-4 mb-4">
-                    <div class="flex flex-col w-full">
-                        <label class="text-sm font-medium text-gray-700 mb-1">Category</label>
-                        <select name="categoryname" required 
-                            class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
-                            <?php 
-                            foreach ($categories as $category) {
-                                echo '<option value="' . htmlspecialchars($category['id']) . '">' . htmlspecialchars($category['name']) . '</option>';
-                            }
-                            ?>
-                        </select>
-                    </div>
-                    <div class="flex flex-col w-full">
-                        <label class="text-sm font-medium text-gray-700 mb-1">Status</label>
-                        <select name="status[]" required 
-                            class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
-                            <option value="available">Available</option>
-                            <option value="unavailable">Unavailable</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
-
-            <div class="flex justify-end space-x-2">
-                <button type="button" onclick="hideAddVehicleForm()" 
-                    class="px-4 py-2 bg-gray-400 text-white rounded-md shadow-sm hover:bg-gray-500 transition">
-                    Cancel
-                </button>
-                <button type="button" onclick="addNewVehicleField()" 
-                    class="px-4 py-2 bg-blue-600 text-white rounded-md shadow-sm hover:bg-blue-700 transition">
-                    Add More Vehicles
-                </button>
-                <button type="submit" 
-                    class="px-4 py-2 bg-green-600 text-white rounded-md shadow-sm hover:bg-green-700 transition">
-                    Add Vehicle
-                </button>
-            </div>
-        </form>
+            </form>
+        </div>
     </div>
-</div>
-
-<!-- Add New Category -->
-<div id="addCategoryForm" class="fixed inset-0 flex items-center justify-center z-50 hidden bg-black bg-opacity-50">
-    <div class="bg-white rounded-lg shadow-lg p-6 w-96">
-        <h3 class="text-lg font-bold text-gray-800 mb-4">Add New Category</h3>
-        <form id="newCategoryForm" action="setcategorie.php" method="POST" class="space-y-4">
-            <div id="categoryFields">
-                <div class="category-field flex flex-col w-full mb-4">
-                    <label class="text-sm font-medium text-gray-700 mb-1">Category Name</label>
-                    <input type="text" name="name" id="categoryName" required 
-                        class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
-                </div>
-                <div class="category-field flex flex-col w-full mb-4">
-                    <label class="text-sm font-medium text-gray-700 mb-1">Category Description</label>
-                    <input type="text" name="description" id="categorydescription" required 
-                        class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
-                </div>
-            </div>
-
-            <div class="flex justify-end space-x-2">
-                <button type="button" onclick="hideAddCategoryForm()" 
-                    class="px-4 py-2 bg-gray-400 text-white rounded-md shadow-sm hover:bg-gray-500 transition">
-                    Cancel
-                </button>
-                <button type="button" onclick="addNewCategoryField()" 
-                    class="px-4 py-2 bg-blue-600 text-white rounded-md shadow-sm hover:bg-blue-700 transition">
-                    Add More Categories
-                </button>
-                <button type="submit" 
-                    class="px-4 py-2 bg-green-600 text-white rounded-md shadow-sm hover:bg-green-700 transition">
-                    Add Category
-                </button>
-            </div>
-        </form>
-    </div>
-</div>
-    <div class="p-6">
-    <table class="w-full">
-        <thead>
-            <tr>
-                <th class="text-left p-3">Category Name</th>
-                <th class="text-left p-3">Description</th>
-                <th class="text-left p-3">Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            <?php
-            $category = new Categorie();
-            $categories = $category->getAllCategories();
-            
-            foreach($categories as $cat) {
-                echo "<tr>";
-                echo "<td class='p-3'>" . htmlspecialchars($cat['name']) . "</td>";
-                echo "<td class='p-3'>" . htmlspecialchars($cat['description']) . "</td>";
-                echo "<td class='p-3'>
-                        <button class='text-blue-600 hover:text-blue-900' onclick='editCategory(" . $cat['id'] . ")'>Edit</button>
-                        <button class='text-red-600 hover:text-red-900 ml-2' onclick='deleteCategory(" . $cat['id'] . ")'>Delete</button>
-                    </td>";
-                echo "</tr>";
-            }
-            ?>
-        </tbody>
-    </table>
-</div>
 </section>
 
-                </section>
 
 
 <!-- Manage Reservations Section -->
@@ -399,7 +375,50 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reservation_id']) && 
                 <!-- Statistics Section -->
                 <section id="statistics" class="section-content hidden">
     <div class="bg-white rounded-lg shadow">
+    <div class="container mx-auto px-4 py-8">
+        <h1 class="text-3xl font-bold mb-6">All Reviews</h1>
         
+        <section id="manage-users" class="section-content">
+            <div class="bg-white rounded-lg shadow">
+                <div class="p-6 border-b">
+                    <h2 class="text-xl font-semibold">Manage Clients</h2>
+                </div>
+                <div class="p-6">
+                    <table class="w-full">
+                        <thead>
+                            <tr>
+                                <th class="text-left p-3">Client Name</th>
+                                <th class="text-left p-3">Email</th>
+                                <th class="text-left p-3">Account Created</th>
+                                <th class="text-left p-3">Number of Reservations</th>
+                                <th class="text-left p-3">Reserved Cars</th>
+                                <th class="text-left p-3">Number of Reviews</th>
+                                <th class="text-left p-3">Archive</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($clients as $client): ?>
+                                <tr>
+                                    <td class="p-3"><?php echo htmlspecialchars($client['firstName'] . ' ' . $client['lastName']); ?></td>
+                                    <td class="p-3"><?php echo htmlspecialchars($client['email']); ?></td>
+                                    <td class="p-3"><?php echo htmlspecialchars($client['createdAt']); ?></td>
+                                    <td class="p-3"><?php echo htmlspecialchars($client['num_reservations']); ?></td>
+                                    <td class="p-3"><?php echo htmlspecialchars($client['reserved_cars']); ?></td>
+                                    <td class="p-3"><?php echo htmlspecialchars($client['num_reviews']); ?></td>
+                                    <td class="p-3">
+                                        <form action="Archiveruser.php" method="POST">
+                                            <input type="hidden" name="clientId" value="<?php echo $client['id']; ?>">
+                                            <button type="submit" class="text-red-600 hover:text-red-800">Archive</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </div>
     </div>
 </section>
             </main>
