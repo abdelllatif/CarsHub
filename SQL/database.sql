@@ -64,3 +64,4 @@ CREATE TABLE reservations (
 INSERT INTO clients (email, password, role, firstName, lastName, phone) 
 VALUES ('haissouneabdellatif749@gmail.com', '$2y$10$CtMTcUHN32iZz0f/F.ueS.eHqSxz8t7B9knw7p004vq9Eh5DsefJS
 ', 'admin', 'Abdellatif', 'Hissoune', '1234567890');
+ALTER TABLE clients ADD COLUMN archived BOOLEAN DEFAULT FALSE;

@@ -119,6 +119,24 @@ class User extends Data {
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
+    public function archiveClient($clientId) {
+        try {
+            $stmt = $this->pdo->prepare("UPDATE clients SET archived = TRUE WHERE id = ?");
+            return $stmt->execute([$clientId]);
+        } catch (PDOException $e) {
+            error_log("Error archiving client: " . $e->getMessage());
+            return false;
+        }
+    }
 
+    public function unarchiveClient($clientId) {
+        try {
+            $stmt = $this->pdo->prepare("UPDATE clients SET archived = FALSE WHERE id = ?");
+            return $stmt->execute([$clientId]);
+        } catch (PDOException $e) {
+            error_log("Error unarchiving client: " . $e->getMessage());
+            return false;
+        }
+    }
 }
 ?>

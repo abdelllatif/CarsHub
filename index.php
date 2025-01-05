@@ -2,7 +2,7 @@
 session_start(); 
 require_once 'classes/classvihcule.php';
 require_once 'classes/categorieclass.php';
-require_once 'users/get_reviews.php';
+require_once 'classes/reviewclass.php';
 
 $categoris = new categorie();
 $categoris->getAllCategories();
@@ -43,7 +43,7 @@ $review = new review();
                 <div class="hidden md:flex items-center space-x-8">
                     <a href="index.php" class="text-gray-600 hover:text-blue-600">Accueil</a>
                     <a href="#vehicles" class="text-gray-600 hover:text-blue-600">Véhicules</a>
-                    <a href="#categories" class="text-gray-600 hover:text-blue-600">Catégories</a>
+                    <a href="users/myreview.php" class="block text-gray-600 hover:text-blue-600">myreviesws</a>
                     <a href="users/myreservation.php" class="block text-gray-600 hover:text-blue-600">Myreservations</a>
 
                     <div class="flex items-center space-x-4">
@@ -72,7 +72,7 @@ $review = new review();
         <div class="p-4 space-y-4">
             <a href="#" class="block text-gray-600 hover:text-blue-600">Accueil</a>
             <a href="#vehicles" class="block text-gray-600 hover:text-blue-600">Véhicules</a>
-            <a href="#categories" class="block text-gray-600 hover:text-blue-600">Catégories</a>
+            <a href="users/myreview.php" class="block text-gray-600 hover:text-blue-600">myreviesws</a>
             <a href="users/myreservation.php" class="block text-gray-600 hover:text-blue-600">Myreservations</a>
         </div>
     </div>
@@ -88,28 +88,27 @@ $review = new review();
             </div>
         </section>
 
-        <!-- Vehicles Section -->
-        <section id="vehicles" class="py-16 bg-gray-100">
-        `<div class="flex gap-4 mb-8">
-    <div class="relative flex-grow">
-        <input type="text" id="searchInput" placeholder="Rechercher un véhicule (ex: BMW 2002)" 
-               class="border border-gray-300 rounded-lg py-2 px-4 w-full" />
-    </div>
-    <select id="categoryFilter" class="border border-gray-300 rounded-lg py-2 px-4">
-        <option value="">Toutes les catégories</option>
-        <?php 
-        $categories = $categoris->getAllCategories();
-        foreach ($categories as $category) {
-            echo '<option value="' . htmlspecialchars($category['id']) . '">' . 
-                 htmlspecialchars($category['name']) . '</option>';
-        }
-        ?>
+ <!-- Vehicles Section -->
+ <section id="vehicles" class="py-16 bg-gray-100">
+        <div class="flex gap-4 mb-8">
+            <div class="relative flex-grow">
+                <input type="text" id="searchInput" placeholder="Rechercher un véhicule (ex: BMW 2002)" class="border border-gray-300 rounded-lg py-2 px-4 w-full" />
+            </div>
+            <select id="categoryFilter" class="border border-gray-300 rounded-lg py-2 px-4">
+                <option value="">Toutes les catégories</option>
+                <?php 
+                $categories = $categoris->getAllCategories();
+                foreach ($categories as $category) {
+                    echo '<option value="' . htmlspecialchars($category['id']) . '">' . htmlspecialchars($category['name']) . '</option>';
+                }
+                ?>
+            </select>
+            <button id="filterBtn" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+                Filtrer
+            </button>
+        </div>
     </select>
-    <button id="filterBtn" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
-        Filtrer
-    </button>
-</div>`;
-
+ 
                 <!-- Best Offers Section -->
                 <section class="py-16 bg-gray-100">
                     <div class="text-center mb-10">
@@ -522,6 +521,9 @@ function closeAllAvisPopup() {
     const allAvisPopup = document.getElementById('allAvisPopup');
     allAvisPopup.classList.add('hidden'); // Hide the popup
 }
+
+
+
 </script>
 
 </body>

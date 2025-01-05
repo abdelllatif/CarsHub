@@ -156,3 +156,92 @@ document.addEventListener('DOMContentLoaded', function() {
 
 </body>
 </html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<?php foreach ($userReviews as $userReview): ?>
+        <div class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full" id="modal-overlay-<?php echo $userReview['id']; ?>">
+            <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+                <div class="mt-3 text-center">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900">Update Your Review</h3>
+                    <form action="submit_review.php" method="POST" class="mt-2 text-left">
+                        <input type="hidden" name="reviewId" value="<?php echo $userReview['id']; ?>">
+                        <input type="hidden" name="clientId" value="<?php echo $_SESSION['user_id']; ?>">
+
+                        <div class="mb-4">
+                            <label class="block text-gray-700 text-sm font-bold mb-2" for="rating">
+                                Your Rating
+                            </label>
+                            <div class="stars flex justify-center space-x-1">
+                                <?php for ($i = 1; $i <= 5; $i++): ?>
+                                    <span class="star text-gray-400 text-3xl cursor-pointer transition duration-150 ease-in-out hover:text-yellow-400" data-value="<?php echo $i; ?>" 
+                                          onclick="setRating(<?php echo $i; ?>, <?php echo $userReview['id']; ?>)">
+                                        &#9733;
+                                    </span>
+                                <?php endfor; ?>
+                            </div>
+                            <input type="hidden" name="rating" id="ratingInput-<?php echo $userReview['id']; ?>" value="<?php echo $userReview['rating']; ?>">
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label class="block text-gray-700 text-sm font-bold mb-2" for="comment">
+                                Your Review
+                            </label>
+                            <textarea 
+                                name="comment" 
+                                id="comment-<?php echo $userReview['id']; ?>"
+                                rows="4"
+                                class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                                placeholder="Share your experience..."
+                                required
+                            ><?php echo htmlspecialchars($userReview['comment']); ?></textarea>
+                        </div>
+                        
+                        <div class="flex items-center justify-between">
+                            <button 
+                                type="submit"
+                                class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition duration-150 ease-in-out"
+                            >
+                                Update Review
+                            </button>
+                            <button 
+                                type="button"
+                                class="close-modal bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition duration-150 ease-in-out"
+                                data-review-id="<?php echo $userReview['id']; ?>"
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+<?php endforeach; ?>

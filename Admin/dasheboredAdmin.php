@@ -4,6 +4,9 @@ session_start();
 require_once 'getstatistique.php';
 require_once '../classes/reservationclass.php';
 require_once '../classes/categorieclass.php';
+require_once '../classes/reviewclass.php';
+$review = new Review();
+$allReviews = $review->getAllReviews(); // Get all reviews for the admin
 
 // First check authentication
 if (!isset($_SESSION['user_email']) || $_SESSION['user_id'] != 1) {
@@ -37,22 +40,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reservation_id']) && 
                 <h2 class="text-2xl font-bold">Admin Dashboard</h2>
             </div>
             <nav class="mt-4" id="sidebar-nav">
-                <a href="#" data-section="dashboard" class="block py-3 px-4 text-gray-300 hover:bg-gray-700 hover:text-white active">
-                    Dashboard Overview
-                </a>
-                <a href="#" data-section="vehicles" class="block py-3 px-4 text-gray-300 hover:bg-gray-700 hover:text-white">
-                    Manage Vehicles
-                </a>
-                <a href="#" data-section="reservations" class="block py-3 px-4 text-gray-300 hover:bg-gray-700 hover:text-white">
-                    Manage Reservations
-                </a>
-                <a href="#" data-section="reviews" class="block py-3 px-4 text-gray-300 hover:bg-gray-700 hover:text-white">
-                    Manage Reviews
-                </a>
-                <a href="#" data-section="statistics" class="block py-3 px-4 text-gray-300 hover:bg-gray-700 hover:text-white">
-                    Statistics
-                </a>
-            </nav>
+    <a href="#" data-section="dashboard" class="block py-3 px-4 text-gray-300 hover:bg-gray-700 hover:text-white active">
+        Dashboard Overview
+    </a>
+     <a href="#" data-section="statistics" class="block py-3 px-4 text-gray-300 hover:bg-gray-700 hover:text-white">
+     Manage users
+    </a>
+    <a href="#" data-section="vehicles" class="block py-3 px-4 text-gray-300 hover:bg-gray-700 hover:text-white">
+        Manage Vehicles
+    </a>
+    <a href="#" data-section="manage-reservations" class="block py-3 px-4 text-gray-300 hover:bg-gray-700 hover:text-white">
+        Manage Reservations
+    </a>
+    <a href="#" data-section="reviews" class="block py-3 px-4 text-gray-300 hover:bg-gray-700 hover:text-white">
+        Manage Reviews
+    </a>
+   
+</nav>
         </div>
 
         <!-- Main Content -->
@@ -174,7 +178,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reservation_id']) && 
                 <div class="vehicle-field flex space-x-4 mb-4">
                     <div class="flex flex-col w-full">
                         <label class="text-sm font-medium text-gray-700 mb-1">Category</label>
-                        <select name="categoryname[]" required 
+                        <select name="categoryname" required 
                             class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
                             <?php 
                             foreach ($categories as $category) {
@@ -220,12 +224,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reservation_id']) && 
             <div id="categoryFields">
                 <div class="category-field flex flex-col w-full mb-4">
                     <label class="text-sm font-medium text-gray-700 mb-1">Category Name</label>
-                    <input type="text" name="name[]" id="categoryName" required 
+                    <input type="text" name="name" id="categoryName" required 
                         class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
                 </div>
                 <div class="category-field flex flex-col w-full mb-4">
                     <label class="text-sm font-medium text-gray-700 mb-1">Category Description</label>
-                    <input type="text" name="description[]" id="categorydescription" required 
+                    <input type="text" name="description" id="categorydescription" required 
                         class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
                 </div>
             </div>
@@ -284,8 +288,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reservation_id']) && 
     <!-- Manage Reservations Section -->
    
                 <!-- Manage Reservations Section -->
-                <section id="manage-reservations" class="section-content">
-                    <div class="bg-white rounded-lg shadow">
+                <section id="manage-reservations" class="section-content hidden">
+                <div class="bg-white rounded-lg shadow">
                         <div class="p-6 border-b">
                             <h2 class="text-xl font-semibold">Reservation Management</h2>
                         </div>
@@ -353,67 +357,49 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reservation_id']) && 
 
                 <!-- Manage Reviews Section -->
                 <section id="reviews" class="section-content hidden">
-                    <div class="bg-white rounded-lg shadow">
-                        <div class="p-6 border-b">
-                            <h2 class="text-xl font-semibold">Review Management</h2>
+                    <div class="container mx-auto px-4 py-8">
+        <h1 class="text-3xl font-bold mb-6">All Reviews</h1>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <?php if ($allReviews && count($allReviews) > 0): ?>
+                <?php foreach ($allReviews as $review): ?>
+                    <div class="bg-white rounded-lg shadow-md p-6">
+                        <h2 class="text-xl font-semibold mb-2">
+                            <?php echo "User: "." ". htmlspecialchars($review['firstName'] . ' ' . $review['lastName']); ?> 
+                            <?php echo "<br> "?>
+                            <?php echo "car: "." ". htmlspecialchars($review['brand'] . ' ' . $review['model']); ?>
+                        </h2>
+                        <div class="flex items-center mb-2">
+                            <?php for ($i = 1; $i <= 5; $i++): ?>
+                                <span class="text-yellow-400">
+                                    <?php echo $i <= $review['rating'] ? '★' : '☆'; ?>
+                                </span>
+                            <?php endfor; ?>
                         </div>
-                        <div class="p-6">
-                            <table class="w-full">
-                                <thead>
-                                    <tr>
-                                        <th class="text-left p-3">User </th>
-                                        <th class="text-left p-3">Vehicle</th>
-                                        <th class="text-left p-3">Rating</th>
-                                        <th class="text-left p-3">Comment</th>
-                                        <th class="text-left p-3">Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td class="p-3">John Doe</td>
-                                        <td class="p-3">Honda Civic</td>
-                                        <td class="p-3">5</td>
-                                        <td class="p-3">Great experience!</td>
-                                        <td class="p-3">
-                                            <button class="text-blue-600 hover:text-blue-900">Edit</button>
-                                            <button class="text-red-600 hover:text-red-900 ml-2">Delete</button>
-                                        </td>
-                                    </tr>
-                                    <!-- More review rows can be added here -->
-                                </tbody>
-                            </table>
+                        <p class="text-gray-600 mb-4"><?php echo htmlspecialchars($review['comment']); ?></p>
+                        <div class="flex justify-between items-center">
+                         
+                            <form action="delete_review.php" method="POST">
+                                <input type="hidden" name="reviewId" value="<?php echo $review['id']; ?>">
+                                <button name="deleteReview" type="submit" 
+                                        class="text-red-600 hover:text-red-800">
+                                    Delete
+                                </button>
+                            </form>
                         </div>
                     </div>
+                <?php endforeach; ?>
+            <?php else: ?>
+                <p>No reviews found.</p>
+            <?php endif; ?>
+        </div>
+    </div>
                 </section>
 
                 <!-- Statistics Section -->
                 <section id="statistics" class="section-content hidden">
     <div class="bg-white rounded-lg shadow">
-        <div class="p-6 border-b">
-            <h2 class="text-xl font-semibold">Statistics Overview</h2>
-        </div>
-        <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-            <!-- Total Rentals Over Time -->
-            <div>
-                <h3 class="text-lg font-semibold">Total Rentals Over Time</h3>
-                <canvas id="rentalsChart"></canvas>
-            </div>
-            <!-- Most Popular Vehicles -->
-            <div>
-                <h3 class="text-lg font-semibold">Most Popular Vehicles</h3>
-                <canvas id="popularVehiclesChart"></canvas>
-            </div>
-            <!-- Revenue Generated -->
-            <div>
-                <h3 class="text-lg font-semibold">Revenue Generated</h3>
-                <p class="text-3xl font-bold text-gray-900">100,000 DH</p>
-            </div>
-            <!-- User Demographics -->
-            <div>
-                <h3 class="text-lg font-semibold">User  Demographics</h3>
-                <canvas id="demographicsChart"></canvas>
-            </div>
-        </div>
+        
     </div>
 </section>
             </main>
@@ -421,78 +407,58 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reservation_id']) && 
     </div>
 
     <script>
-        document.addEventListener('click', function() {
-            const navLinks = document.querySelectorAll('#sidebar-nav a');
-            const sections = document.querySelectorAll('.section-content');
-            const sectionTitle = document.getElementById('section-title');
+        document.addEventListener('DOMContentLoaded', function() {
+        const navLinks = document.querySelectorAll('#sidebar-nav a');
+        const sections = document.querySelectorAll('.section-content');
+        const sectionTitle = document.getElementById('section-title');
 
-            function showSection(sectionId) {
-                sections.forEach(section => {
-                    section.classList.add('hidden');
-                });
-                document.getElementById(sectionId).classList.remove('hidden');
-                
-                navLinks.forEach(link => {
-                    link.classList.remove('bg-blue-600');
-                    if(link.dataset.section === sectionId) {
-                        link.classList.add('bg-blue-600');
-                        sectionTitle.textContent = link.textContent.trim();
-                    }
-                });
-            }
-
+        function showSection(sectionId) {
+            sections.forEach(section => {
+                section.classList.add('hidden');
+            });
+            document.getElementById(sectionId).classList.remove('hidden');
+            
             navLinks.forEach(link => {
-                link.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    const sectionId = link.dataset.section;
-                    showSection(sectionId);
-                });
+                link.classList.remove('bg-blue-600');
+                if (link.dataset.section === sectionId) {
+                    link.classList.add('bg-blue-600');
+                    sectionTitle.textContent = link.textContent.trim();
+                }
+            });
+        }
+
+        navLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const sectionId = link.dataset.section;
+                showSection(sectionId);
             });
         });
-// Function to show the Add Vehicle form
-function showAddVehicleForm() {
+    });
+
+    function showAddVehicleForm() {
         document.getElementById('addVehicleForm').classList.remove('hidden');
     }
 
-    // Function to hide the Add Vehicle form
     function hideAddVehicleForm() {
         document.getElementById('addVehicleForm').classList.add('hidden');
     }
 
-    // Function to show the Add Category form
     function showAddCategoryForm() {
         document.getElementById('addCategoryForm').classList.remove('hidden');
     }
 
-    // Function to hide the Add Category form
     function hideAddCategoryForm() {
         document.getElementById('addCategoryForm').classList.add('hidden');
-        
     }
 
     document.getElementById('newVehicleForm').addEventListener('submit', function(event) {
-        // Add logic to handle form submission, e.g., sending data to the server
         hideAddVehicleForm();
     });
 
-    // Event listener for the Add Category form submission
     document.getElementById('newCategoryForm').addEventListener('submit', function(event) {
-        // Add logic to handle form submission, e.g., sending data to the server
         hideAddCategoryForm();
     });
-
-
-    document.getElementById('newVehicleForm').addEventListener('submit', function(event) {
-            // Add logic to handle form submission, e.g., sending data to the server
-            hideAddVehicleForm();
-        });
-
-        // Event listener for the Add Category form submission
-        document.getElementById('newCategoryForm').addEventListener('submit', function(event) {
-            // Add logic to handle form submission, e.g., sending data to the server
-            hideAddCategoryForm();
-        });
-
 
     
     </script>
