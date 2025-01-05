@@ -6,10 +6,16 @@ require_once '../classes/reservationclass.php';
 require_once '../classes/categorieclass.php';
 require_once '../classes/reviewclass.php';
 require_once '../classes/classvihcule.php';
+require_once '../classes/reviewclass.php';
+require_once '../classes/clientclasse.php';
+$review = new Review();
+$clients = $review->getClientsInfo();
+
 $review = new Review();
 $allReviews = $review->getAllReviews(); // Get all reviews for the admin
 $vehicle = new Vehicle();
 $vehicles = $vehicle->getAllVehicles();
+
 // First check authentication
 if (!isset($_SESSION['user_email']) || $_SESSION['user_id'] != 1) {
     header("Location: ../connexion/singin.php");
@@ -45,9 +51,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reservation_id']) && 
     <a href="#" data-section="dashboard" class="block py-3 px-4 text-gray-300 hover:bg-gray-700 hover:text-white active">
         Dashboard Overview
     </a>
-     <a href="#" data-section="statistics" class="block py-3 px-4 text-gray-300 hover:bg-gray-700 hover:text-white">
-     Manage users
-    </a>
+ 
     <a href="#" data-section="vehicles" class="block py-3 px-4 text-gray-300 hover:bg-gray-700 hover:text-white">
         Manage Vehicles
     </a>
@@ -101,6 +105,50 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reservation_id']) && 
                             ?></p>
                         </div>
                     </div>
+                    <div class="bg-white rounded-lg shadow">
+    <div class="container mx-auto px-4 py-8">
+        <h1 class="text-3xl font-bold mb-6">All Clients</h1>
+        
+            <div class="bg-white rounded-lg shadow">
+                <div class="p-6 border-b">
+                    <h2 class="text-xl font-semibold">Manage Clients</h2>
+                </div>
+                <div class="p-6">
+                    <table class="w-full">
+                        <thead>
+                            <tr>
+                                <th class="text-left p-3">Client Name</th>
+                                <th class="text-left p-3">Email</th>
+                                <th class="text-left p-3">Account Created</th>
+                                <th class="text-left p-3">Number of Reservations</th>
+                                <th class="text-left p-3">Reserved Cars</th>
+                                <th class="text-left p-3">Number of Reviews</th>
+                                <th class="text-left p-3">Archive</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($clients as $client): ?>
+                                <tr>
+                                    <td class="p-3"><?php echo htmlspecialchars($client['firstName'] . ' ' . $client['lastName']); ?></td>
+                                    <td class="p-3"><?php echo htmlspecialchars($client['email']); ?></td>
+                                    <td class="p-3"><?php echo htmlspecialchars($client['createdAt']); ?></td>
+                                    <td class="p-3"><?php echo htmlspecialchars($client['num_reservations']); ?></td>
+                                    <td class="p-3"><?php echo htmlspecialchars($client['reserved_cars']); ?></td>
+                                    <td class="p-3"><?php echo htmlspecialchars($client['num_reviews']); ?></td>
+                                    <td class="p-3">
+                                        <form action="Archiveruser.php" method="POST">
+                                            <input type="hidden" name="clientId" value="<?php echo $client['id']; ?>">
+                                            <button type="submit" class="text-red-600 hover:text-red-800">Archive</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+    </div>
+    </div>
                 </section>
 
                 <!-- Manage Vehicles Section -->
@@ -372,55 +420,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reservation_id']) && 
     </div>
                 </section>
 
-                <!-- Statistics Section -->
-                <section id="statistics" class="section-content hidden">
-    <div class="bg-white rounded-lg shadow">
-    <div class="container mx-auto px-4 py-8">
-        <h1 class="text-3xl font-bold mb-6">All Reviews</h1>
-        
-        <section id="manage-users" class="section-content">
-            <div class="bg-white rounded-lg shadow">
-                <div class="p-6 border-b">
-                    <h2 class="text-xl font-semibold">Manage Clients</h2>
-                </div>
-                <div class="p-6">
-                    <table class="w-full">
-                        <thead>
-                            <tr>
-                                <th class="text-left p-3">Client Name</th>
-                                <th class="text-left p-3">Email</th>
-                                <th class="text-left p-3">Account Created</th>
-                                <th class="text-left p-3">Number of Reservations</th>
-                                <th class="text-left p-3">Reserved Cars</th>
-                                <th class="text-left p-3">Number of Reviews</th>
-                                <th class="text-left p-3">Archive</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php foreach ($clients as $client): ?>
-                                <tr>
-                                    <td class="p-3"><?php echo htmlspecialchars($client['firstName'] . ' ' . $client['lastName']); ?></td>
-                                    <td class="p-3"><?php echo htmlspecialchars($client['email']); ?></td>
-                                    <td class="p-3"><?php echo htmlspecialchars($client['createdAt']); ?></td>
-                                    <td class="p-3"><?php echo htmlspecialchars($client['num_reservations']); ?></td>
-                                    <td class="p-3"><?php echo htmlspecialchars($client['reserved_cars']); ?></td>
-                                    <td class="p-3"><?php echo htmlspecialchars($client['num_reviews']); ?></td>
-                                    <td class="p-3">
-                                        <form action="Archiveruser.php" method="POST">
-                                            <input type="hidden" name="clientId" value="<?php echo $client['id']; ?>">
-                                            <button type="submit" class="text-red-600 hover:text-red-800">Archive</button>
-                                        </form>
-                                    </td>
-                                </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </section>
-    </div>
-    </div>
-</section>
+                
             </main>
         </div>
     </div>
