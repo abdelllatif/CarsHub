@@ -7,13 +7,13 @@ class Reservation extends data {
     public function __construct() {
         $this->pdo = $this->connextion(); 
     }
-
+    
     public function createReservation($vehicleId, $startDate, $endDate, $location, $clientId) {
         $totalPrice = $this->calculatePrice($vehicleId, $startDate, $endDate); 
         $this->createdAt = date("Y-m-d H:i:s"); 
 
-        $query = "INSERT INTO reservations (vehicleId, clientId, startDate, endDate, pickupLocation, totalPrice, status, createdAt)
-                  VALUES (:vehicleId, :clientId, :startDate, :endDate, :location, :totalPrice, 'pending', :createdAt)";
+        $query = "INSERT INTO reservations (vehicleId, customerId, startDate, endDate, pickupLocation, totalPrice, status, createdAt)
+        VALUES (:vehicleId, :clientId, :startDate, :endDate, :location, :totalPrice, 'en Attend', :createdAt)";
         $stmt = $this->pdo->prepare($query);
         $stmt->bindParam(":vehicleId", $vehicleId);
         $stmt->bindParam(":clientId", $clientId);
@@ -21,6 +21,8 @@ class Reservation extends data {
         $stmt->bindParam(":endDate", $endDate);
         $stmt->bindParam(":location", $location);
         $stmt->bindParam(":totalPrice", $totalPrice);
+        $stmt->bindParam(":createdAt", $this -> createdAt);
+
 
         if ($stmt->execute()) { 
             return "Reservation successfully created!";
@@ -76,18 +78,51 @@ class Reservation extends data {
     }
 
     public function updateStatus($reservationId, $status) {
-        $query = "UPDATE reservations SET status = :status WHERE id = :reservationId"; 
-        $stmt = $this->pdo->prepare($query);
-        $stmt->bindParam(":reservationId", $reservationId);
-        $stmt->bindParam(":status", $status);
-
-        if ($stmt->execute()) {
-            return "Reservation status updated!";
-        } else {
-            return "Error updating reservation status.";
+        try {
+            // Log the incoming values
+            error_log("Attempting to update - ID: $reservationId, Status: $status");
+            
+            $query = "UPDATE reservations SET status = :status WHERE id = :reservationId"; 
+            $stmt = $this->pdo->prepare($query);
+            $stmt->bindParam(":reservationId", $reservationId, PDO::PARAM_INT);
+            $stmt->bindParam(":status", $status, PDO::PARAM_STR);
+        
+            $result = $stmt->execute();
+            if ($result) {
+                error_log("Update successful");
+                return "Reservation status updated!";
+            } else {
+                error_log("Update failed: " . print_r($stmt->errorInfo(), true));
+                return "Error updating reservation status.";
+            }
+        } catch (PDOException $e) {
+            error_log("Database error: " . $e->getMessage());
+            return "Database error: " . $e->getMessage();
         }
     }
-
+    public function getAllReservations() {
+        $stmt = $this->pdo->prepare("SELECT r.*, u.firstName AS user_name, u.lastName AS user_lastname, v.model AS vehicle, v.brand AS v_brand 
+                                     FROM reservations r
+                                     JOIN clients u ON r.customerId = u.id
+                                     JOIN vehicles v ON r.vehicleId = v.id");
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+    public function getmyReservations($userId) {
+        $stmt = $this->pdo->prepare("SELECT r.*, u.firstName AS user_name, u.lastName AS user_lastname, v.model AS vehicle, v.brand AS v_brand 
+                                     FROM reservations r
+                                     JOIN clients u ON r.customerId = u.id
+                                     JOIN vehicles v ON r.vehicleId = v.id
+                                     WHERE r.customerId = :userId");
+        $stmt->bindParam(':userId', $userId, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+    public function deleteReservation($reservationId) {
+        $sql = "DELETE FROM reservations WHERE id = ?";
+        $stmt = $this->pdo->prepare($sql);
+        return $stmt->execute([$reservationId]);
+    }
     public function getReservationById($reservationId) {
         $query = "SELECT * FROM reservations WHERE id = :reservationId";
         $stmt = $this->pdo->prepare($query);

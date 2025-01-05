@@ -2,50 +2,72 @@
 require_once 'connectiondatabase.php';  
 
 class Categorie extends Data {
-    protected $id;
-    protected $name;
-    protected $description;
+    public $name;
+    public $description;
+    public $pdo;
 
-    // Constructor to initialize properties and establish database connection
-    public function __construct($id = null, $name = null, $description = null) {
-        $this->pdo = $this->connextion();  // Get the PDO connection from the Data class
-        $this->id = $id;
-        $this->name = $name;
-        $this->description = $description;
+    public function __construct() {
+        $this->pdo = $this->connextion();  
     }
+    public function categories($name,$description){
+       
+        try {
+            $query = "INSERT INTO categories (name, description)
+            VALUES (:name, :description)";
+            $stmt = $this->pdo->prepare($query);  
+            $stmt->bindParam(":name", $name);
+            $stmt->bindParam(":description", $description);
+            if ($stmt->execute()) {
+            echo "Data sent successfully";
 
-    // Method to get available vehicles for a specific category
+
+                //header('Location: ../connexion/signin.php');
+                exit();
+            } else {
+                $errormessage = $stmt->errorInfo();
+                echo "Error: " . $errormessage[2];
+            }
+        } catch (PDOException $e) {
+            echo "Database error: " . $e->getMessage();
+        }
+    
+
+    }
+    public function getAllCategories() {
+        try {
+            $query = "SELECT * FROM categories";
+            $stmt = $this->pdo->prepare($query);
+            $stmt->execute();
+            
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            echo "Database error: " . $e->getMessage();
+            return [];
+        }
+    }
     public function getAvailableVehicles() {
         $query = "SELECT * FROM vehicles WHERE categoryId = :categoryId AND status = 'available'";
         $stmt = $this->pdo->prepare($query);
-        $stmt->bindParam(":categoryId", $this->id);  // Bind the categoryId
+        $stmt->bindParam(":categoryId", $this->id);  
         $stmt->execute();
 
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);  // Return the list of available vehicles in this category
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);  
     }
 
-    // Method to get the count of vehicles in a category
     public function getVehicleCount() {
         $query = "SELECT COUNT(*) AS vehicle_count FROM vehicles WHERE categoryId = :categoryId";
         $stmt = $this->pdo->prepare($query);
-        $stmt->bindParam(":categoryId", $this->id);  // Bind the categoryId
+        $stmt->bindParam(":categoryId", $this->id);  
         $stmt->execute();
 
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
-        return $result['vehicle_count'];  // Return the count of vehicles in this category
+        return $result['vehicle_count'];  
     }
 
-    // Method to filter vehicles by specific criteria (e.g., price, model, etc.)
     public function filterVehicles($criteria) {
-        $query = "SELECT * FROM vehicles WHERE categoryId = :categoryId";
+        $query = "SELECT * FROM vehicles WHERE categoryname = :categoryname";
         
-        // Add conditions based on the criteria
-        if (isset($criteria['priceMin'])) {
-            $query .= " AND pricePerDay >= :priceMin";
-        }
-        if (isset($criteria['priceMax'])) {
-            $query .= " AND pricePerDay <= :priceMax";
-        }
+      
         if (isset($criteria['model'])) {
             $query .= " AND model LIKE :model";
         }
@@ -53,7 +75,6 @@ class Categorie extends Data {
         $stmt = $this->pdo->prepare($query);
         $stmt->bindParam(":categoryId", $this->id);
 
-        // Bind dynamic parameters
         if (isset($criteria['priceMin'])) {
             $stmt->bindParam(":priceMin", $criteria['priceMin']);
         }
@@ -66,7 +87,7 @@ class Categorie extends Data {
 
         $stmt->execute();
 
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);  // Return the filtered list of vehicles in this category
+        return $stmt->fetchAll(PDO::FETCH_ASSOC); 
     }
 }
 ?>

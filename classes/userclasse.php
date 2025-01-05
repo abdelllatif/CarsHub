@@ -11,29 +11,30 @@ class User extends Data {
     public $phone;
     public $pdo;
 
-    public function __construct($lastName, $firstName, $email, $password, $phone) {
+    public function __construct() {
         $this->pdo = $this->connextion();  
-
-        $this->lastName = $lastName;
-        $this->firstName = $firstName;
-        $this->email = $this->sanitizeEmail($email);  
-        $this->password = $this->hashPassword($password);  
-        $this->phone = $phone;
         $this->role = "user"; 
-        $this->createdAt = date("Y-m-d H:i:s"); 
+        $this->createdAt = date("Y-m-d H:i:s");
     }
-
-    private function sanitizeEmail($email) {
+    
+    public function sanitizeEmail($email) {
         return filter_var($email, FILTER_SANITIZE_EMAIL);
     }
 
-    private function hashPassword($password) {
+    public function hashPassword($password) {
         return password_hash($password, PASSWORD_DEFAULT);
     }
 
-    public function register() {
+    public function register($lastName, $firstName, $email, $password, $phone) {
+        $this->lastName = $lastName;
+        $this->firstName = $firstName;
+        $this->email = $email;
+        $this->password = $password;
+        $this->phone = $phone;
+       
+
         try {
-            $query = "INSERT INTO users (lastName, firstName, email, password, role, createdAt, phone)
+            $query = "INSERT INTO clients (lastName, firstName, email, password, role, createdAt, phone)
                       VALUES (:lastName, :firstName, :email, :password, :role, :createdAt, :phone)";
             $stmt = $this->pdo->prepare($query);  
             $stmt->bindParam(":lastName", $this->lastName);
@@ -43,10 +44,11 @@ class User extends Data {
             $stmt->bindParam(":role", $this->role);
             $stmt->bindParam(":createdAt", $this->createdAt);
             $stmt->bindParam(":phone", $this->phone);
-
             if ($stmt->execute()) {
                 echo "Data sent successfully";
-                header('Location: signin.php');
+             
+
+                //header('Location: ../connexion/signin.php');
                 exit();
             } else {
                 $errormessage = $stmt->errorInfo();
@@ -56,46 +58,55 @@ class User extends Data {
             echo "Database error: " . $e->getMessage();
         }
     }
-
     //  login
     public function login($email2, $password2) {
-        $query = "SELECT * FROM users WHERE email = :email2";
+        $query = "SELECT * FROM clients WHERE email = :email2";
         $stmt = $this->pdo->prepare($query);  
         $stmt->bindParam(":email2", $email2);
         $stmt->execute();
-
+    
         if ($stmt->rowCount() == 0) {
             echo "This user not found";
             exit();
         }
-
+    
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
         if (password_verify($password2, $user['password'])) {
-            session_start();
-            $_SESSION['user_id'] = $user['id'];
-            $_SESSION['user_email'] = $user['email'];
-            $_SESSION['user_role'] = $user['role'];
-            echo "Login successful";
-            header('Location: index.php');
+            
+            
+            if ($user['role'] === 'admin') {
+                header("Location: ../Admin/dasheboredAdmin.php"); 
+                session_start();
+                $_SESSION['user_id'] = $user['id'];
+                $_SESSION['user_email'] = $user['email'];
+                $_SESSION['user_role'] = $user['role'];
+            } else {
+                header("Location: ../index.php"); 
+                session_start();
+                $_SESSION['user_id'] = $user['id'];
+                $_SESSION['user_email'] = $user['email'];
+                $_SESSION['user_role'] = $user['role'];
+            }
             exit();
         } else {
             echo "Invalid password";
+            echo "<br>";
+            var_dump(password_verify($password2, $user['password']));
         }
     }
 
     //  logout
     public function logout() {
         session_start();
-        session_unset();
-        session_destroy();
-        echo "Logged out successfully";
-        header('Location: signin.php');
+        session_unset(); // Clear all session variables
+        session_destroy(); // Destroy the session
+        header('Location: signin.php'); // Redirect to the sign-in page
         exit();
     }
 
     // Get user info
     public function getProfile($email) {
-        $query = "SELECT * FROM users WHERE email = :email";
+        $query = "SELECT * FROM clients WHERE email = :email";
         $stmt = $this->pdo->prepare($query);
         $stmt->bindParam(":email", $email);
         $stmt->execute();

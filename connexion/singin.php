@@ -28,15 +28,12 @@
 
     <!-- Login Form -->
     <form id="login-form" class="space-y-4" action="signinmanagement.php" method="POST">
-      <!-- Email (Visible for Login) -->
       <div>
-        <input type="email" id="email-login" name="email" class="w-full p-3 rounded border border-gray-300 focus:ring focus:ring-blue-300 focus:outline-none" placeholder="Email Address" required />
+        <input type="email" id="email-login" name="email2" class="w-full p-3 rounded border border-gray-300 focus:ring focus:ring-blue-300 focus:outline-none" placeholder="Email Address" required />
       </div>
-      <!-- Password (Visible for Login) -->
       <div>
-        <input type="password" id="password-login" name="password" class="w-full p-3 rounded border border-gray-300 focus:ring focus:ring-blue-300 focus:outline-none" placeholder="Password" required />
+        <input type="password" id="password-login" name="password2" class="w-full p-3 rounded border border-gray-300 focus:ring focus:ring-blue-300 focus:outline-none" placeholder="Password" required />
       </div>
-      <!-- Submit Button -->
       <button type="submit" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold p-3 rounded-lg">
         Login
       </button>
@@ -44,32 +41,26 @@
 
     <!-- Signup Form (Initially Hidden) -->
     <form id="signup-form" class="space-y-4 hidden" action="signupmanagement.php" method="POST">
-      <!-- First Name (Visible only for Signup) -->
       <div>
         <input type="text" id="firstName" name="firstName" class="w-full p-3 rounded border border-gray-300 focus:ring focus:ring-blue-300 focus:outline-none" placeholder="First Name" required />
       </div>
 
-      <!-- Last Name (Visible only for Signup) -->
       <div>
         <input type="text" id="lastName" name="lastName" class="w-full p-3 rounded border border-gray-300 focus:ring focus:ring-blue-300 focus:outline-none" placeholder="Last Name" required />
       </div>
 
-      <!-- Email (Visible for both Login and Signup) -->
       <div>
         <input type="email" id="email-signup" name="email2" class="w-full p-3 rounded border border-gray-300 focus:ring focus:ring-blue-300 focus:outline-none" placeholder="Email Address" required />
       </div>
 
-      <!-- Password (Visible for both Login and Signup) -->
       <div>
         <input type="password" id="password-signup" name="password2" class="w-full p-3 rounded border border-gray-300 focus:ring focus:ring-blue-300 focus:outline-none" placeholder="Password" required />
       </div>
 
-      <!-- Phone (Visible only for Signup) -->
       <div>
         <input type="text" id="phone" name="phone" class="w-full p-3 rounded border border-gray-300 focus:ring focus:ring-blue-300 focus:outline-none" placeholder="Phone Number" />
       </div>
 
-      <!-- Submit Button -->
       <button type="submit" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold p-3 rounded-lg">
         Signup
       </button>

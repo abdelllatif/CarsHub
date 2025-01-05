@@ -1,95 +1,116 @@
 <?php
 require_once 'connectiondatabase.php';  
+class Vehicle extends Data{
+    public $pdo;
+    public $image;
+    private $uploadDir = 'uploads/';  
 
-class Vehicle extends Data {
-    // Define the vehicle properties
-    protected $id;  // Added vehicle ID
-    protected $model;
-    protected $brand;
-    protected $description;
-    protected $pricePerDay;
-    public $status;
-    public $categoryname;
-    public $categoryId; 
-    public $characteristics;
-    protected $image;
-    protected $reviews;
-    protected $createdAt;
+    public function __construct() {
+            $this->pdo = $this->connextion();  
 
-    public function __construct($model, $brand, $description, $pricePerDay, $status, $categoryname, $characteristics, $reviews) {
-        $this->pdo = $this->connextion(); 
-        
-        $this->model = $model;
-        $this->brand = $brand;
-        $this->description = $description;  
-        $this->pricePerDay = $pricePerDay;  
-        $this->status = $status;
-        $this->categoryname = $categoryname;
-        $this->characteristics = $characteristics;
-        $this->reviews = $reviews;
-        $this->createdAt = date("Y-m-d H:i:s");  
-        
-        $this->categoryId = $this->getCategoryIdByName($categoryname);
-    }
+      
 
-    private function getCategoryIdByName($categoryname) {
-        $query = "SELECT id FROM categories WHERE name = :categoryname LIMIT 1";
-        $stmt = $this->pdo->prepare($query);
-        $stmt->bindParam(":categoryname", $categoryname);
-        $stmt->execute();
-        
-        $result = $stmt->fetch(PDO::FETCH_ASSOC);
-        return $result ? $result['id'] : null;  
-    }
-
-    public function uploadImage($file) {
-        $fileName = $file['name'];
-        $fileTmpName = $file['tmp_name'];
-        $fileSize = $file['size'];
-        $fileError = $file['error'];
-        $fileType = $file['type'];
-
-        if ($fileError === 0) {
-            $allowed = ['image/jpeg', 'image/png', 'image/gif'];
-            if (in_array($fileType, $allowed)) {
-                if ($fileSize < 5000000) {
-                    $fileNewName = uniqid('', true) . "." . strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
-                    $fileDestination = 'uploads/' . $fileNewName;
-
-                    if (move_uploaded_file($fileTmpName, $fileDestination)) {
-                        echo "File uploaded successfully!";
-                        $this->image = $fileDestination;  
-                    } else {
-                        echo "Error moving the file.";
-                    }
-                } else {
-                    echo "File is too large!";
-                }
-            } else {
-                echo "Invalid file type. Only JPEG, PNG, and GIF are allowed.";
-            }
-        } else {
-            echo "There was an error uploading your file.";
+        if (!file_exists($this->uploadDir)) {
+            mkdir($this->uploadDir, 0777, true);
         }
     }
 
-    public function save() {
-        $query = "INSERT INTO vehicles (model, brand, description, pricePerDay, status, categoryId, characteristics, image, createdAt)
-                  VALUES (:model, :brand, :description, :pricePerDay, :status, :categoryId, :characteristics, :image, :createdAt)";
-        $stmt = $this->pdo->prepare($query);
-
-        $stmt->bindParam(":model", $this->model);
-        $stmt->bindParam(":brand", $this->brand);
-        $stmt->bindParam(":description", $this->description);
-        $stmt->bindParam(":pricePerDay", $this->pricePerDay);
-        $stmt->bindParam(":status", $this->status);
-        $stmt->bindParam(":categoryId", $this->categoryId);  
-        $stmt->bindParam(":characteristics", $this->characteristics);
-        $stmt->bindParam(":image", $this->image); 
-        $stmt->bindParam(":createdAt", $this->createdAt);
-
-        return $stmt->execute();
+    public function uploadImage($imageData) {
+        if ($imageData['error'] !== UPLOAD_ERR_OK) {
+            throw new Exception("Upload failed with error code " . $imageData['error']);
+        }
+    
+        $imageInfo = getimagesize($imageData['tmp_name']);
+        if ($imageInfo === false) {
+            throw new Exception("Uploaded file is not a valid image.");
+        }
+    
+        $allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
+        if (!in_array($imageInfo['mime'], $allowedTypes)) {
+            throw new Exception("Invalid file type. Only JPG, PNG, and GIF are allowed.");
+        }
+    
+        $extension = pathinfo($imageData['name'], PATHINFO_EXTENSION);
+        $newFilename = uniqid() . '.' . $extension;
+        $targetPath = $this->uploadDir . $newFilename;
+    
+        echo "Target path: $targetPath<br>"; 
+    
+        if (!move_uploaded_file($imageData['tmp_name'], $targetPath)) {
+            throw new Exception("Failed to move uploaded file.");
+        }
+    
+        $this->image = $targetPath;
+    
+        return $targetPath;
     }
+    
+    // public function getCategoryIdByName($categoryName) {
+    //     if (empty($categoryName)) {
+    //         throw new Exception("Category name cannot be empty");
+    //     }
+
+    //     $stmt = $this->pdo->prepare("SELECT id FROM categories WHERE name = ?");
+    //     $stmt->execute([$categoryName]);
+    //     $result = $stmt->fetch(PDO::FETCH_COLUMN);
+    //     var_dump($result);
+
+    //     if (!$result) {
+    //         throw new Exception("Category not found: " . $categoryName);
+    //     }
+    //     return $result;
+    // }
+
+    public function save($model, $brand, $description, $pricePerDay, $status, $categoryId, $characteristics, $image, $createdAt) {
+        // Validate required fields
+        if (empty($model) || empty($brand) || empty($categoryId)) {
+            throw new Exception("Model, brand, and category are required fields");
+        }
+
+        try {
+            $stmt = $this->pdo->prepare("
+                INSERT INTO vehicles (
+                    model, brand, description, pricePerDay, 
+                    status, categoryId, characteristics, image, createdAt
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ");
+
+            return $stmt->execute([
+                $model,
+                $brand,
+                $description,
+                $pricePerDay,
+                $status,
+                $categoryId,
+                $characteristics,
+                $image,
+                $createdAt
+            ]);
+        } catch (PDOException $e) {
+            throw new Exception("Database error: " . $e->getMessage());
+        }
+    }
+
+    public function validateData($data) {
+        $errors = [];
+
+        if (empty($data['model'])) $errors[] = "Model is required";
+        if (empty($data['brand'])) $errors[] = "Brand is required";
+        if (!is_numeric($data['pricePerDay'])) $errors[] = "Price must be a number";
+        if (empty($data['category'])) $errors[] = "Category is required";
+
+        return $errors;
+    }
+
+    public function getCars() {
+        $query = "SELECT * FROM vehicles";
+        $stmt = $this->pdo->prepare($query); 
+        $stmt->execute();
+    
+        $cars = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return $cars; 
+    }
+
 
     public function checkAvailability($startDate, $endDate) {
         $query = "SELECT * FROM vehicles WHERE status = 'available' AND createdAt BETWEEN :startDate AND :endDate";
@@ -102,10 +123,10 @@ class Vehicle extends Data {
     }
 
     public function updateStatus($status) {
-        $query = "UPDATE vehicles SET status = :status WHERE id = :id";  // Changed 'model' to 'id'
+        $query = "UPDATE vehicles SET status = :status WHERE id = :id";  
         $stmt = $this->pdo->prepare($query);
         $stmt->bindParam(":status", $status);
-        $stmt->bindParam(":id", $this->id);  // Changed to use 'id'
+        $stmt->bindParam(":id", $this->id);  
         
         return $stmt->execute(); 
     }
@@ -113,7 +134,7 @@ class Vehicle extends Data {
     public function getReviews() {
         $query = "SELECT * FROM reviews WHERE vehicle_id = :vehicle_id";
         $stmt = $this->pdo->prepare($query);
-        $stmt->bindParam(":vehicle_id", $this->id);  // Changed 'model' to 'id'
+        $stmt->bindParam(":vehicle_id", $this->id);  
         $stmt->execute();
 
         return $stmt->fetchAll(PDO::FETCH_ASSOC);  
@@ -122,7 +143,7 @@ class Vehicle extends Data {
     public function getAverageRating() {
         $query = "SELECT AVG(rating) AS average_rating FROM reviews WHERE vehicle_id = :vehicle_id";
         $stmt = $this->pdo->prepare($query);
-        $stmt->bindParam(":vehicle_id", $this->id);  // Changed 'model' to 'id'
+        $stmt->bindParam(":vehicle_id", $this->id);  
         $stmt->execute();
 
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -162,16 +183,35 @@ class Vehicle extends Data {
 
         return $vehicles;
     }
-
     public function paginateVehicles($page, $limit) {
         $offset = ($page - 1) * $limit;
-        $query = "SELECT * FROM vehicles LIMIT :limit OFFSET :offset";  // Changed 'vihcule' to 'vehicles'
+        $query = "SELECT * FROM vehicles LIMIT :limit OFFSET :offset";  
         $stmt = $this->pdo->prepare($query);
         $stmt->bindParam(":limit", $limit, PDO::PARAM_INT);
         $stmt->bindParam(":offset", $offset, PDO::PARAM_INT);
         $stmt->execute();
-
+    
         return $stmt->fetchAll(PDO::FETCH_ASSOC); 
     }
+    public function getTotalCars() {
+        $query = "SELECT COUNT(*) FROM vehicles";
+        $stmt = $this->pdo->prepare($query);
+        $stmt->execute();
+        return $stmt->fetchColumn();
+    }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ?>

@@ -1,3 +1,15 @@
+<?php
+session_start(); 
+require_once 'classes/classvihcule.php';
+require_once 'classes/categorieclass.php';
+require_once 'users/get_reviews.php';
+
+$categoris = new categorie();
+$categoris->getAllCategories();
+$userIsRegistered = isset($_SESSION['user_email']) && isset($_SESSION['user_id']);
+$review = new review();
+?>
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -5,9 +17,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Location de véhicules simple et rapide pour tous vos besoins.">
     <title>Location de Véhicules - AutoLoc</title>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Custom styles */
         .loading {
             display: none;
         }
@@ -17,13 +29,7 @@
     </style>
 </head>
 <body class="min-h-screen bg-gray-100 flex flex-col">
-    
-
-
-
-
-
-<!-- Navigation -->
+    <!-- Navigation -->
     <nav class="bg-white shadow-md fixed w-full z-50">
         <div class="container mx-auto px-4">
             <div class="flex justify-between items-center h-20">
@@ -38,10 +44,10 @@
                     <a href="index.php" class="text-gray-600 hover:text-blue-600">Accueil</a>
                     <a href="#vehicles" class="text-gray-600 hover:text-blue-600">Véhicules</a>
                     <a href="#categories" class="text-gray-600 hover:text-blue-600">Catégories</a>
-                    <a href="#contact" class="text-gray-600 hover:text-blue-600">Contact</a>
+                    <a href="users/myreservation.php" class="block text-gray-600 hover:text-blue-600">Myreservations</a>
 
                     <div class="flex items-center space-x-4">
-                        <a href="singin.php">
+                        <a href="connexion/singin.php">
                         <button id="loginBtn" class="text-gray-600 hover:text-blue-600" aria-label="Connexion">
                             <svg class="w-5 h-5 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
@@ -61,22 +67,20 @@
         </div>
     </nav>
 
-
-
     <!-- Mobile Menu -->
     <div id="mobileMenu" class="hidden md:hidden fixed w-full bg-white shadow-md z-40 top-20">
         <div class="p-4 space-y-4">
             <a href="#" class="block text-gray-600 hover:text-blue-600">Accueil</a>
             <a href="#vehicles" class="block text-gray-600 hover:text-blue-600">Véhicules</a>
             <a href="#categories" class="block text-gray-600 hover:text-blue-600">Catégories</a>
-            <a href="#contact" class="block text-gray-600 hover:text-blue-600">Contact</a>
+            <a href="users/myreservation.php" class="block text-gray-600 hover:text-blue-600">Myreservations</a>
         </div>
     </div>
 
     <!-- Main Content -->
     <main class="flex-grow pt-20">
         <!-- Hero Section -->
-        <section class="bg-gradient-to-r from-blue-600 to-blue- 800 text-white py-20">
+        <section class="bg-gradient-to-r from-blue-600 to-blue-800 text-white py-20">
             <div class="container mx-auto px-4 text-center">
                 <h1 class="text-4xl md:text-5xl font-bold">Bienvenue chez AutoLoc</h1>
                 <p class="mt-4 text-lg">Votre solution de location de véhicules rapide et fiable.</p>
@@ -86,24 +90,25 @@
 
         <!-- Vehicles Section -->
         <section id="vehicles" class="py-16 bg-gray-100">
-            <div class="container mx-auto px-4">
-                <div class="flex flex-col md:flex-row justify-between items-center mb-8">
-                    <h2 class="text-3xl font-bold">Nos Véhicules</h2>
-                </div>
-
-                <!-- Search and Filter -->
-                <div class="flex gap-4 mb-8">
-                    <div class="relative flex-grow">
-                        <input type="text" id="searchInput" placeholder="Rechercher un véhicule" class="border border-gray-300 rounded-lg py-2 px-4 w-full" />
-                    </div>
-                    <select id="categoryFilter" class="border border-gray-300 rounded-lg py-2 px-4">
-                        <option value="">Catégorie</option>
-                        <option value="suv">SUV</option>
-                        <option value="berline">Berline</option>
-                        <option value="utilitaire">Utilitaire</option>
-                    </select>
-                    <button id="filterBtn" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">Filtrer</button>
-                </div>
+        `<div class="flex gap-4 mb-8">
+    <div class="relative flex-grow">
+        <input type="text" id="searchInput" placeholder="Rechercher un véhicule (ex: BMW 2002)" 
+               class="border border-gray-300 rounded-lg py-2 px-4 w-full" />
+    </div>
+    <select id="categoryFilter" class="border border-gray-300 rounded-lg py-2 px-4">
+        <option value="">Toutes les catégories</option>
+        <?php 
+        $categories = $categoris->getAllCategories();
+        foreach ($categories as $category) {
+            echo '<option value="' . htmlspecialchars($category['id']) . '">' . 
+                 htmlspecialchars($category['name']) . '</option>';
+        }
+        ?>
+    </select>
+    <button id="filterBtn" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+        Filtrer
+    </button>
+</div>`;
 
                 <!-- Best Offers Section -->
                 <section class="py-16 bg-gray-100">
@@ -111,101 +116,202 @@
                         <h2 class="text-3xl font-bold">Meilleures Offres</h2>
                         <p class="text-gray-600">Découvrez nos voitures les mieux notées</p>
                     </div>
-                    <div class=" mx-auto px-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                        <div class="  bg-white shadow-md rounded-lg overflow-hidden transform hover:scale-105 transition">
-                            <img src="https://www.mercedes-benz.ca/content/dam/mb-nafta/ca/myco/my22/eqb-suv/all-vehicles/MBCAN-2022-EQB350W4-SUV-AVP-DR.png" alt="Voiture 1" class="carcontainer w-full">
-                            <div class=" p-6">
-                                <h3 class=" text-xl font-semibold">Voiture Modèle 1</h3>
-                                <p class=" text-gray-600">À partir de 49€/jour</p>
-                                <div class="mt-4 flex justify-between items-center">
-                                    <div>
-                                    <span class="star cursor-pointer text-gray-300 hover:text-yellow-400" data-value="1">★</span>
-                                    <span class="star cursor-pointer text-gray-300 hover:text-yellow-400" data-value="2">★</span>
-                                    <span class="star cursor-pointer text-gray-300 hover:text-yellow-400" data-value="3">★</span>
-                                    <span class="star cursor-pointer text-gray-300 hover:text-yellow-400" data-value="4">★</span>
-                                    <span class="star cursor-pointer text-gray-300 hover:text-yellow-400" data-value="5">★</span>
-                                    </div>
-                                    <span class="text-gray-600 ml-2">(120 avis)</span><span class="viewReviewsBtn text-sm text-gray-800 py-2 ">Voir les avis</span>
+                    <div class="mx-auto px-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <?php
+                    $vehicle = new Vehicle();
+                    $cars = $vehicle->getCars(); 
 
-                                </div>
-                                <button type="submit" class="reserveBtns mt-6 w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700">Réserver</button>
-                                </div>
-                        </div>
-                        <!-- Repeat for other vehicles -->
+                    $limit = 8; 
+
+                    $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+                    $page = max($page, 1); 
+
+                    $totalCars = $vehicle->getTotalCars();
+                    $totalPages = ceil($totalCars / $limit); 
+
+                    $cars = $vehicle->paginateVehicles($page, $limit);
+
+  foreach ($cars as $car) {
+    $brand = htmlspecialchars($car['brand']);
+    $model = htmlspecialchars($car['model']);
+    $pricePerDay = htmlspecialchars($car['pricePerDay']);
+    $image = htmlspecialchars($car['image']);
+   
+    // Get the recent rating for this car
+ // Get the recent rating for this car
+ $recentRating = $review->getRecentRating($car['id']);
+ $ratingValue = $recentRating ? $recentRating['rating'] : 0;
+ $totalReviews = $review->getTotalReviews($car['id']);
+ 
+    echo "
+        <div class=\"bg-white shadow-md rounded-lg overflow-hidden transform hover:scale-105 transition\">
+            <img src=\"Admin/$image\" alt=\"$brand $model\" class=\"carcontainer h-44 w-full\"> 
+            <div class=\"p-6\">
+                <h3 class=\"text-xl font-semibold\">$brand $model</h3>
+                <p class=\"text-gray-600\">À partir de $pricePerDay €/jour</p>
+                <div class=\"mt-4 flex justify-between items-center\">
+                    <div class=\"stars\" data-rating=\"$ratingValue\">
+                        <span class=\"star cursor-pointer\" data-value=\"1\">★</span>
+                        <span class=\"star cursor-pointer\" data-value=\"2\">★</span>
+                        <span class=\"star cursor-pointer\" data-value=\"3\">★</span>
+                        <span class=\"star cursor-pointer\" data-value=\"4\">★</span>
+                        <span class=\"star cursor-pointer\" data-value=\"5\">★</span>
                     </div>
+                    <span class=\"text-gray-600 ml-2\">($totalReviews avis)</span>
+                    <button onclick=\"openAllAvisPopup({$car['id']})\" class=\"viewReviewsBtn text-sm text-gray-800 py-2 cursor-pointer\">Voir les avis</button>
+                </div>";
+
+                if (isset($_SESSION['user_email']) && isset($_SESSION['user_id'])) { 
+                    echo "<button type=\"button\" onclick=\"showreservationform(" . htmlspecialchars(json_encode($car)) . ")\" class=\"reserveBtns mt-6 w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700\">Réserver</button>";
+                } else {
+                    echo "<button type=\"button\" onclick=\"showLoginAlert()\" class=\"mt-6 w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700\">Réserver</button>";
+                }
+
+    echo "
+            </div>
+        </div>
+    ";
+                    }
+                    ?>
+                    </div>
+ 
                 </section>
+                
+<!-- All Avis Popup (Initially Hidden) -->
+<!-- All Avis Popup (Initially Hidden) -->
+<div id="allAvisPopup" class="popup fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+    <div class="popup-content bg-white p-6 rounded-lg max-w-lg w-full shadow-lg">
+        <h2 class="text-xl font-bold mb-4">كل المراجعات</h2>
+        <div id="reviewsList" class="mb-4">
+            <?php
+            $pdo = new Review();
 
-
-    <!-- Car Details Popup -->
-    <div id="carDetailsPopup" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-        <div class="bg-white rounded-lg p-6 max-w-2xl flex">
-            <div class="w-1/2">
-                <!-- The car image with the animated shadow effect -->
-                <img src="https://www.mercedes-benz.ca/content/dam/mb-nafta/ca/myco/my22/eqb-suv/all-vehicles/MBCAN-2022-EQB350W4-SUV-AVP-DR.png" alt="Car Model" class="car-image animate-shadow">
-            </div>
-            <div class="w-1/2 pl-6">
-                <h3 class="text-2xl font-bold mb-2">Modèle: Voiture Modèle 1</h3>
-                <p class="text-lg mb-2"><strong>Prix:</strong> À partir de 49€/jour</p>
-                <p class="text-lg mb-2"><strong>Disponibilité:</strong> Disponible</p>
-                <p class="text-lg mb-4"><strong>Description:</strong> Une voiture confortable et spacieuse, idéale pour les trajets en famille ou entre amis.</p>
-               <div class="flex justify-end ">
-                 <button id="closeCarDetails" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 mr-4">Fermer</button>
-                <button id=""  class=" bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 ">Réserver</button>
-                </div>
-            </div>
+            $pdos=$pdo->getReviewsByVehicle($car['id']) ;  
+            var_dump($pdos);
+                echo  "   <p>Total reviews : $totalReviews</p>";       
+    if ($pdos) {
+        foreach ($pdos as $review) {
+            echo "<div class='bg-gray-100 p-2 mb-2 rounded'>";
+            echo "<p><strong>" . htmlspecialchars($review['firstName'] . ' ' . $review['lastName']) . "</strong> - Rating: " . str_repeat('★', $review['rating']) . "</p>";
+            echo "<p>" . htmlspecialchars($review['comment']) . "</p>";
+            echo "</div>";
+        }
+    } else {
+        echo "<p>No reviews yet.</p>";
+    }
+     ?>
         </div>
+        <button onclick="closeAllAvisPopup() "  id="closeAllAvisPopup" class="bg-red-500 text-white px-4 py-2 rounded mt-4">إغلاق</button>
     </div>
+</div>
+                <!-- Car Details Popup -->
+                <div id="carDetailsPopup" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+                    <div class="flex justify-between">
+                        <div class="bg-white rounded-lg p-6 max-w-2xl flex">
+                            <div class="w-1/2">
+                                <img src="https://www.mercedes-benz.ca/content/dam/mb-nafta/ca/myco/my22/eqb-suv/all-vehicles/MBCAN-2022-EQB350W4-SUV-AVP-DR.png" alt="Car Model" class="car-image animate-shadow">
+                            </div>
+                            <div class="w-1/2 pl-6">
+                                <h3 class="text-2xl font-bold mb-2">Modèle: Voiture Modèle 1</h3>
+                                <p class="text-lg mb-2"><strong>Prix:</strong> À partir de 49€/jour</p>
+                                <p class="text-lg mb-2"><strong>Disponibilité:</strong> Disponible</p>
+                                <p class="text-lg mb-4"><strong>Description:</strong> Une voiture confortable et spacieuse, idéale pour les trajets en famille ou entre amis.</p>
+                                <div class="flex justify-end">
+                                    <button id="closeCarDetails" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 mr-4">Fermer</button>
+                                    <button id="" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">Réserver</button>
+                                </div>
+                            </div>
+                        </div>
 
-                <!-- Reviews List Popup -->
-                <div id="reviewsListPopup" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50">
-                    <div class="bg-white rounded-lg p-6 max-w-lg mx-auto mt-20">
-                        <h3 class="text-xl font-bold mb-4">Avis sur Voiture Modèle 1</h3>
-                        <div id="reviewsContainer" class="mb-4">
-                            <!-- Reviews will be dynamically added here -->
-                        </div>
-                        <textarea id="newReview" placeholder="Ajouter un avis..." class="border border-gray-300 rounded-lg w-full p-2"></textarea>
-                        <div class="flex justify-end gap-4 mt-4">
-                            <button id="closeReviews" class="px-4 py-2">Fermer</button>
-                            <button id="submitReview" class="bg-blue-600 text-white px-4 py-2 rounded">Ajouter Avis</button>
-                        </div>
+                        
                     </div>
-                </div>
-     <!-- Your previous HTML structure -->
+                </div>        
 
-    <!-- Reservation Popup -->
-    <div id="reservation-popup" class="hidden fixed inset-0 flex items-center justify-center z-50  bg-black bg-opacity-50">
-        <div class="bg-white rounded-lg shadow-lg p-6 w-96">
-            <h2 class="text-xl font-bold mb-4">Réservation de Voiture</h2>
-            <form id="reservation-form" class="space-y-4">
-                <!-- Date de Retour -->
-                <div>
-                    <label for="returnDate" class="block text-sm font-medium text-gray-700">Date de Retour</label>
-                    <input type="date" id="returnDate" name="returnDate" required
-                        class="mt-1 block w-full p-2 border border-gray-300 rounded-md focus:ring focus:ring-blue-300 focus:outline-none" />
-                </div>
+                <script>
+                    function submitComment() {
+                        alert('Comment submitted!');
+                    }
 
-                <!-- Adresse -->
-                <div>
-                    <label for="address" class="block text-sm font-medium text-gray-700">Adresse</label>
-                    <textarea id="address" name="address" required rows="3"
-                        class="mt-1 block w-full p-2 border border-gray-300 rounded-md focus:ring focus:ring-blue-300 focus:outline-none" placeholder="Entrez votre adresse"></textarea>
-                </div>
+                    function showLoginAlert() {
+                        Swal.fire({
+                            title: 'Connexion requise',
+                            text: 'Veuillez vous connecter pour réserver un véhicule',
+                            icon: 'warning',
+                            showCancelButton: true,
+                            confirmButtonText: 'Se connecter',
+                            cancelButtonText: 'Annuler'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                window.location.href = 'connexion/singin.php';
+                            }
+                        });
+                    }
 
-                <!-- Buttons -->
-                <div class="flex justify-end space-x-2">
-                    <button type="button" id="cancel-button" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400">Annuler</button>
-                    <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">Confirmer la Réservation</button>
-                </div>
-            </form>
-        </div>
+                    document.getElementById('closeCarDetails').addEventListener('click', () => {
+                        document.getElementById('carDetailsPopup').classList.add('hidden');
+                    });
+
+                    document.getElementById('reservation-form').addEventListener('submit', function(event) {
+                        event.preventDefault();
+                        Swal.fire({
+                            title: 'Réservation confirmée!',
+                            text: 'Votre réservation a été enregistrée avec succès. Vous pouvez maintenant laisser un commentaire.',
+                            icon: 'success',
+                            showCancelButton: true,
+                            confirmButtonText: 'Laisser un commentaire',
+                            cancelButtonText: 'Fermer'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                document.getElementById('comment-section').classList.remove('hidden');
+                            }
+                            document.getElementById('reservation-popup').classList.add('hidden');
+                        });
+                    });
+                </script>
+
+                <!-- Reservation Popup -->
+                <div id="reservation-popup"  class="hidden fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
+    <div class="bg-white rounded-lg shadow-lg p-6 w-96">
+        <h2 class="text-xl font-bold mb-4">Réservation de Voiture</h2>
+        <form id="reservation-form"  action="users/setreservation.php" method="POST" class="space-y-4">
+            <input type="hidden" id="id_car" name="id_car" required
+            class="mt-1 block w-full p-2 border border-gray-300 rounded-md focus:ring focus:ring-blue-300 focus:outline-none" />
+            <div>
+                <label for="debueDate" class="block text-sm font-medium text-gray-700">Date de Debut</label>
+                <input type="datetime-local" id="debueDate" name="debueDate" required
+                    class="mt-1 block w-full p-2 border border-gray-300 rounded-md focus:ring focus:ring-blue-300 focus:outline-none" />
+            </div>
+            <div>
+                <label for="returnDate" class="block text-sm font-medium text-gray-700">Date de Retour</label>
+                <input type="datetime-local" id="returnDate" name="returnDate" required
+                    class="mt-1 block w-full p-2 border border-gray-300 rounded-md focus:ring focus:ring-blue-300 focus:outline-none" />
+            </div>
+            <div>
+                <label for="address" class="block text-sm font-medium text-gray-700">Adresse</label>
+                <textarea id="address" name="address" required rows="3"
+                    class="mt-1 block w-full p-2 border border-gray-300 rounded-md focus:ring focus:ring-blue-300 focus:outline-none" placeholder="Entrez votre adresse"></textarea>
+            </div>
+
+            <div class="flex justify-end space-x-2">
+                <button type="button" id="cancel-button" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400">Annuler</button>
+                <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">Confirmer la Réservation</button>
+            </div>
+        </form>
     </div>
+</div>
 
                 <!-- Pagination -->
                 <div class="flex justify-center mt-8">
-                    <button id="prevPage" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700" disabled>Précédent</button>
-                    <button id="nextPage" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 ml-4">Suivant</button>
+                    <form method="GET" action="">
+                        <input type="hidden" name="page" value="<?php echo max($page - 1, 1); ?>">
+                        <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700" <?php if ($page <= 1) echo 'disabled'; ?>>Précédent</button>
+                    </form>
+                    
+                    <form method="GET" action="">
+                        <input type="hidden" name="page" value="<?php echo min($page + 1, $totalPages); ?>">
+                        <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 ml-4" <?php if ($page >= $totalPages) echo 'disabled'; ?>>Suivant</button>
+                    </form>
                 </div>
-            </div>
         </section>
 
         <!-- Footer -->
@@ -218,110 +324,26 @@
     <script>
 
   
-// Filter button click event
-document.getElementById('filterBtn').addEventListener('click', function() {
-    const searchQuery = document.getElementById('searchInput').value.toLowerCase();
-    const category = document.getElementById('categoryFilter').value;
-    
-    // Filtering logic (simple example: hiding non-matching vehicles)
-    document.querySelectorAll('.carcontainer').forEach(car => {
-        const carName = car.querySelector('.carcontainer h3').textContent.toLowerCase();
-        const carCategory = car.dataset.category.toLowerCase();
-        
-        const matchesSearch = carName.includes(searchQuery);
-        const matchesCategory = category ? carCategory === category : true;
-        
-        if (matchesSearch && matchesCategory) {
-            car.style.display = 'block';
-        } else {
-            car.style.display = 'none';
-        }
-    });
-});
 
-// Show car details popup
+
 document.querySelectorAll('.carcontainer').forEach(car => {
     car.addEventListener('click', () => {
         document.getElementById('carDetailsPopup').classList.remove('hidden');
     });
 });
 
-// Close car details popup
 document.getElementById('closeCarDetails').addEventListener('click', () => {
     document.getElementById('carDetailsPopup').classList.add('hidden');
 });
 
-// Review Popup
-document.querySelectorAll('.viewReviewsBtn').forEach(button => {
-    button.addEventListener('click', () => {
-        document.getElementById('reviewsListPopup').classList.toggle('hidden');
-        loadReviews(); // Placeholder function to load reviews
-    });
-});
 
-document.getElementById('submitReview').onclick = () => {
-    const newReview = document.getElementById('newReview').value;
-    if (newReview) {
-        // Display the review
-        const reviewElement = document.createElement('p');
-        reviewElement.classList.add("text-lg", "rounded-lg", "border-2", "border-black");
-        reviewElement.textContent = newReview;
-        document.getElementById('reviewsContainer').appendChild(reviewElement);
-        document.getElementById('newReview').value = ''; // Clear input
-    } else {
-        alert('Veuillez entrer un avis.');
-    }
-};
 
-// Close reviews list popup
-document.getElementById('closeReviews').addEventListener('click', () => {
-    document.getElementById('reviewsListPopup').classList.add('hidden');
-});
-
-// Rating System (Stars)
-const stars = document.querySelectorAll('.star');
-const ratingInput = document.getElementById('ratingInput');
-
-stars.forEach((star, index) => {
-    star.addEventListener('click', () => {
-        const rating = parseInt(star.getAttribute('data-value')); 
-        ratingInput.value = rating; 
-        updateStarColors(rating);
-    });
-
-    // Highlight stars on hover
-    star.addEventListener('mouseover', () => {
-        updateStarColors(index + 1);
-    });
-
-    // Reset star colors after hover
-    star.addEventListener('mouseout', () => {
-        const rating = parseInt(ratingInput.value);
-        updateStarColors(rating);
-    });
-});
-
-// Function to update the star colors based on the rating
-function updateStarColors(rating) {
-    stars.forEach((s, i) => {
-        if (i < rating) {
-            s.classList.remove('text-gray-300');
-            s.classList.add('text-yellow-400');
-        } else {
-            s.classList.remove('text-yellow-400');
-            s.classList.add('text-gray-300');
-        }
-    });
-}
-
-// Cancel and reset rating
 document.getElementById('cancelRating').addEventListener('click', () => {
     document.getElementById('reviewPopup').classList.add('hidden');
     ratingInput.value = 0;
     updateStarColors(0);
 });
 
-// Submit rating
 document.getElementById('submitRating').addEventListener('click', () => {
     const rating = parseInt(ratingInput.value);
     if (rating > 0) {
@@ -332,7 +354,6 @@ document.getElementById('submitRating').addEventListener('click', () => {
     }
 });
 
-// Pagination and Other Button Actions
 document.getElementById('nextPage').addEventListener('click', function() {
     alert('Next page functionality to be implemented.');
 });
@@ -341,19 +362,16 @@ document.getElementById('prevPage').addEventListener('click', function() {
     alert('Previous page functionality to be implemented.');
 });
 
-// Open the popup for all reservation buttons
 document.querySelectorAll('.reserveBtns').forEach(button => {
     button.addEventListener('click', () => {
         document.getElementById('reservation-popup').classList.remove('hidden');
     });
 });
 
-// Close reservation popup
 document.getElementById('cancel-button').addEventListener('click', () => {
     document.getElementById('reservation-popup').classList.add('hidden');
 });
 
-// Handle form submission (optional)
 document.getElementById('reservation-form').addEventListener('submit', function(event) {
     event.preventDefault();
     alert('Réservation confirmée!');
@@ -361,6 +379,149 @@ document.getElementById('reservation-form').addEventListener('submit', function(
 });
 
 
+
+
+/**********************************************/ 
+function showreservationform(car) {
+    document.getElementById('id_car').value = car.id; 
+    const reservationPopup = document.getElementById('reservation-popup');
+    const cancelButton = document.getElementById('cancel-button');
+    
+    reservationPopup.classList.remove('hidden');
+
+    cancelButton.addEventListener('click', function() {
+        reservationPopup.classList.add('hidden');
+    });
+}
+
+
+
+
+
+
+
+
+function showLoginAlert() {
+    Swal.fire({
+        title: 'Connexion requise',
+        text: 'Veuillez vous connecter pour réserver un véhicule',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Se connecter',
+        cancelButtonText: 'Annuler'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            window.location.href = 'connexion/singin.php';
+        }
+    });
+}
+
+document.querySelectorAll('.reserveBtns').forEach(button => {
+    button.addEventListener('click', () => {
+        Swal.fire({
+            title: 'Confirmer la réservation',
+            text: 'Êtes-vous sûr de vouloir réserver ce véhicule ?',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Oui, réserver',
+            cancelButtonText: 'Annuler'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                document.getElementById('reservation-popup').classList.remove('hidden');
+            }
+        });
+    });
+});
+
+document.getElementById('reservation-form').addEventListener('submit', function(event) {
+    event.preventDefault();
+    Swal.fire({
+        title: 'Réservation confirmée!',
+        text: 'Votre réservation a été enregistrée avec succès. Vous pouvez maintenant laisser un commentaire.',
+        icon: 'success',
+        showCancelButton: true,
+        confirmButtonText: 'Laisser un commentaire',
+        cancelButtonText: 'Fermer'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // Show comment form
+            document.getElementById('comment-section').classList.remove('hidden');
+        }
+        document.getElementById('reservation-popup').classList.add('hidden');
+    });
+});
+
+// Add this to the car details popup HTML
+const commentSection = `
+    <div id="comment-section" class="hidden mt-4">
+        <h4 class="text-lg font-semibold mb-2">Ajouter un commentaire</h4>
+        <textarea 
+            class="w-full p-2 border rounded-lg mb-2" 
+            placeholder="Partagez votre expérience..."></textarea>
+        <button 
+            class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+            onclick="submitComment()">
+            Envoyer
+        </button>
+    </div>
+`;
+
+// Add this function for comment submission
+function submitComment() {
+    const commentText = document.querySelector('#comment-section textarea').value;
+    if (commentText.trim()) {
+        Swal.fire({
+            title: 'Merci!',
+            text: 'Votre commentaire a été ajouté avec succès',
+            icon: 'success'
+        });
+        document.querySelector('#comment-section textarea').value = '';
+        document.getElementById('comment-section').classList.add('hidden');
+    } else {
+        Swal.fire({
+            title: 'Erreur',
+            text: 'Veuillez entrer un commentaire',
+            icon: 'error'
+        });
+    }
+}
+
+
+
+    // Add click event to "Voir les avis" buttons
+    const viewReviewsButtons = document.querySelectorAll('.viewReviewsBtn');
+    viewReviewsButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const carId = this.getAttribute('data-car-id');
+            const reviewsContainer = document.getElementById(`allAvisPopup-${carId}`);
+            
+            if (reviewsContainer.classList.contains('hidden')) {
+                // Fetch and display reviews
+                fetch(`get_reviews.php?carId=${carId}`)
+                    .then(response => response.text())
+                    .then(data => {
+                        reviewsContainer.innerHTML = data;
+                        reviewsContainer.classList.remove('hidden');
+                    })
+                    .catch(error => console.error('Error:', error));
+            } else {
+                // Hide reviews if they're already visible
+                reviewsContainer.classList.add('hidden');
+            }
+        });
+
+
+
+});
+
+function openAllAvisPopup(car) {
+    document.getElementById('allAvisPopup').classList.remove('hidden');
+    
+}
+function closeAllAvisPopup() {
+    const allAvisPopup = document.getElementById('allAvisPopup');
+    allAvisPopup.classList.add('hidden'); // Hide the popup
+}
 </script>
 
 </body>

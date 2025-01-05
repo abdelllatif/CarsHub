@@ -56,7 +56,7 @@ CREATE TABLE reservations (
     pickupLocation VARCHAR(255) NOT NULL,
     dropoffLocation VARCHAR(255) NOT NULL,
     totalPrice FLOAT NOT NULL,
-    status ENUM('refused', 'confirmed', 'canceled','en Attend') DEFAULT 'en Attend',
+    status ENUM('pending', 'confirmed', 'canceled') DEFAULT 'pending',
     createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (customerId) REFERENCES clients(id) ON DELETE CASCADE,
     FOREIGN KEY (vehicleId) REFERENCES vehicles(id) ON DELETE CASCADE
